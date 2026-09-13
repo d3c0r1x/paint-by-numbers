@@ -34,7 +34,8 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="flex gap-2">
             <button
               onClick={() => this.setState({ error: null })}
-              className="rounded-xl bg-ink px-4 py-2 font-semibold text-paper"
+              type="button"
+              className="rounded-xl bg-ink px-4 py-2 font-semibold text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30"
             >
               {t('error.retry')}
             </button>
@@ -43,7 +44,9 @@ export class ErrorBoundary extends Component<Props, State> {
                 useAppStore.getState().reset();
                 this.setState({ error: null });
               }}
-              className="rounded-xl border border-paper-deep bg-paper px-4 py-2 font-semibold text-ink"
+              type="button"
+              className="rounded-xl border border-paper-deep bg-paper px-4 py-2 font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30"
+              aria-label={t('processing.back')}
             >
               {t('processing.back')}
             </button>
