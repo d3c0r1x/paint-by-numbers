@@ -25,6 +25,7 @@ export function ProcessingScreen() {
   const [percent, setPercent] = useState(0);
   const [step, setStep] = useState<PipelineStep | null>(null);
   const [failed, setFailed] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const t = (key: string, args?: Record<string, string | number>) => translate(lang, key, args);
@@ -76,8 +77,11 @@ export function ProcessingScreen() {
         if (cancelled) return;
         setPipeline(result);
         goTo('coloring');
-      } catch {
-        if (!cancelled) setFailed(true);
+      } catch (err) {
+        if (!cancelled) {
+          setFailed(true);
+          setErrorMessage(err instanceof Error ? err.message : 'Неизвестная ошибка');
+        }
       }
     }
     void run();
@@ -90,6 +94,7 @@ export function ProcessingScreen() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
         <p className="text-accent">{t('processing.error')}</p>
+        {errorMessage && <p className="max-w-sm text-xs text-ink-faint">{errorMessage}</p>}
         <button onClick={reset} className="rounded-xl bg-ink px-4 py-2 font-semibold text-paper">
           {t('processing.back')}
         </button>
