@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { translate } from '../i18n';
 import { useCanvasLayers } from '../canvas/useCanvasLayers';
+import { AccessibilitySettings } from '../a11y/AccessibilitySettings';
+
 import {
   BrushEngine,
   pointsFromPointerEvent,
@@ -606,6 +608,8 @@ export function ColoringScreen() {
             onChange={(e) => setOpacity(Number(e.target.value) / 100)}
             className="pbn-range w-full"
           />
+
+          <AccessibilitySettings onClose={() => setSettingsOpen(false)} />
         </Sheet>
       )}
 

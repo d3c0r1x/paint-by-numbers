@@ -36,7 +36,7 @@ export function A11yProvider({ children }: { children: React.ReactNode }) {
       setFontScale: (scale) => setPrefs((prev) => ({ ...prev, fontScale: scale })),
       fontScaleMultiplier,
     }),
-    [prefs.highContrast, prefs.fontScale],
+    [prefs.highContrast, prefs.fontScale, fontScaleMultiplier],
   );
 
   useEffect(() => {

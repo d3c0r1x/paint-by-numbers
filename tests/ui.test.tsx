@@ -3,6 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ColorCircle } from '../src/ui/ColorCircle';
 import { Button, IconButton } from '../src/ui/Button';
 import { createRef } from 'react';
+import { A11yProvider } from '../src/a11y/A11yContext';
+import { AccessibilitySettings } from '../src/a11y/AccessibilitySettings';
 
 describe('ColorCircle', () => {
   it('показывает символ цвета для цветного кружка', () => {
@@ -201,5 +203,87 @@ describe('IconButton accessibility', () => {
     const btn = screen.getByRole('button', { name: 'Test' });
     expect(btn.className).toContain('focus-visible:outline-none');
     expect(btn.className).toContain('focus-visible:ring-2');
+  });
+});
+
+describe('AccessibilitySettings', () => {
+  it('переключает high-contrast класс на document.documentElement', () => {
+    const originalItem = localStorage.getItem('pbn.a11y');
+    try {
+      const { rerender } = render(
+        <A11yProvider>
+          <AccessibilitySettings onClose={() => {}} />
+        </A11yProvider>,
+      );
+      expect(document.documentElement.classList.contains('high-contrast')).toBe(false);
+
+      // кликаем по кнопке переключения high contrast
+      const toggleButton = screen.getByRole('button', { name: /высокий контраст/i });
+      fireEvent.click(toggleButton);
+
+      expect(document.documentElement.classList.contains('high-contrast')).toBe(true);
+
+      // переключаем обратно
+      fireEvent.click(toggleButton);
+      expect(document.documentElement.classList.contains('high-contrast')).toBe(false);
+    } finally {
+      if (originalItem !== null) localStorage.setItem('pbn.a11y', originalItem);
+    }
+  });
+
+  it('устанавливает CSS-переменную --font-scale при выборе размера шрифта', () => {
+    const originalItem = localStorage.getItem('pbn.a11y');
+    try {
+      const { rerender } = render(
+        <A11yProvider>
+          <AccessibilitySettings onClose={() => {}} />
+        </A11yProvider>,
+      );
+      // по умолчанию medium (1)
+      expect(document.documentElement.style.getPropertyValue('--font-scale')).toBe('1');
+
+      // выбираем small
+      const smallButton = screen.getByRole('button', { name: /маленький/i });
+      fireEvent.click(smallButton);
+      expect(document.documentElement.style.getPropertyValue('--font-scale')).toBe('0.875');
+
+      // выбираем large
+      const largeButton = screen.getByRole('button', { name: /большой/i });
+      fireEvent.click(largeButton);
+      expect(document.documentElement.style.getPropertyValue('--font-scale')).toBe('1.25');
+    } finally {
+      if (originalItem !== null) localStorage.setItem('pbn.a11y', originalItem);
+    }
+  });
+
+  it('кнопка high contrast имеет aria-pressed', () => {
+    render(
+      <A11yProvider>
+        <AccessibilitySettings onClose={() => {}} />
+      </A11yProvider>,
+    );
+    const toggleButton = screen.getByRole('button', { name: /высокий контраст/i });
+    expect(toggleButton).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(toggleButton);
+    expect(toggleButton).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(toggleButton);
+    expect(toggleButton).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('кнопки размера шрифта имеют aria-pressed', () => {
+    render(
+      <A11yProvider>
+        <AccessibilitySettings onClose={() => {}} />
+      </A11yProvider>,
+    );
+    const mediumButton = screen.getByRole('button', { name: /средний/i });
+    expect(mediumButton).toHaveAttribute('aria-pressed', 'true');
+
+    const smallButton = screen.getByRole('button', { name: /маленький/i });
+    fireEvent.click(smallButton);
+    expect(mediumButton).toHaveAttribute('aria-pressed', 'false');
+    expect(smallButton).toHaveAttribute('aria-pressed', 'true');
   });
 });
