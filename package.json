@@ -9,7 +9,15 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint src/ tests/ --ext .ts,.tsx"
+    "lint": "eslint src/ tests/ --ext .ts,.tsx",
+    "format": "prettier --write ."
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write",
+      "bash -c 'npm test -- --run --reporter=dot $MATCHES'"
+    ]
   },
   "dependencies": {
     "dexie": "^4.2.1",
@@ -29,7 +37,9 @@
     "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-react-hooks": "^7.1.1",
     "fake-indexeddb": "^6.2.5",
+    "husky": "^9.1.7",
     "jsdom": "^30.0.1",
+    "lint-staged": "^17.5.1",
     "prettier": "^3.9.6",
     "tailwindcss": "^4.1.18",
     "typescript": "~5.9.3",
