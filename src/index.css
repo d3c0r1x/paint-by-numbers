@@ -8,12 +8,25 @@
   --color-ink-soft: #57534e;
   --color-ink-faint: #a8a29e;
   --color-accent: #c45a5a;
+
+  /* Dark mode overrides */
+  --color-dark-paper: #1c1917;
+  --color-dark-paper-warm: #292524;
+  --color-dark-paper-deep: #3f3a36;
+  --color-dark-ink: #f5f0e8;
+  --color-dark-ink-soft: #d6d0c8;
+  --color-dark-ink-faint: #9a948c;
+  --color-dark-accent: #e8a6a6;
 }
 
 html,
 body,
 #root {
   height: 100%;
+}
+
+html {
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 body {
@@ -26,6 +39,34 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   background: var(--color-paper-warm);
   color: var(--color-ink);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+html[data-theme="dark"] body {
+  background: var(--color-dark-paper-warm);
+  color: var(--color-dark-ink);
+}
+
+html[data-theme="dark"] .thin-scroll {
+  scrollbar-color: var(--color-dark-paper-deep) transparent;
+}
+
+html[data-theme="dark"] .thin-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-dark-paper-deep);
+}
+
+html[data-theme="dark"] .pbn-range::-webkit-slider-runnable-track {
+  background: var(--color-dark-paper-deep);
+}
+
+html[data-theme="dark"] .pbn-range::-moz-range-track {
+  background: var(--color-dark-paper-deep);
+}
+
+html[data-theme="dark"] .pbn-range::-webkit-slider-thumb,
+html[data-theme="dark"] .pbn-range::-moz-range-thumb {
+  background: var(--color-dark-paper);
+  border-color: var(--color-dark-ink);
 }
 
 canvas {

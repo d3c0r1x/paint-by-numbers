@@ -12,6 +12,9 @@ interface AppState {
   lang: Lang;
   setLang: (lang: Lang) => void;
 
+  darkMode: boolean;
+  toggleDarkMode: () => void;
+
   sourceImage: Blob | null;
   sourceName: string;
   setSource: (image: Blob | null, name?: string) => void;
@@ -35,6 +38,9 @@ export const useAppStore = create<AppState>((set) => ({
 
   lang: detectLang(),
   setLang: (lang) => set({ lang }),
+
+  darkMode: false,
+  toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),
 
   sourceImage: null,
   sourceName: '',

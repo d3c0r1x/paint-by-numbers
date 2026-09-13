@@ -7,6 +7,7 @@ import type { PipelineResult, PaletteEntry } from '../engine/types';
 import { getCatalogArtworks, type CatalogArtwork } from '../catalog';
 import { Button } from '../ui/Button';
 import { LogoMark, IconTrash, IconFolder } from '../ui/icons';
+import { DarkModeToggle } from '../ui/DarkModeToggle';
 
 type ListedProject = Project & { thumbnail: string | null };
 
@@ -107,21 +108,24 @@ export function HomeScreen() {
           <LogoMark />
           <h1 className="text-[20px] font-bold tracking-tight">{t('app.title')}</h1>
         </div>
-        <div className="flex rounded-full bg-paper-deep/60 p-1 text-xs font-bold">
-          {(['ru', 'en'] as const).map((l) => (
-            <button
-              key={l}
-              onClick={() => {
-                setLang(l);
-                saveLang(l);
-              }}
-              className={`rounded-full px-3 py-1.5 uppercase transition-colors ${
-                lang === l ? 'bg-paper text-ink shadow-sm' : 'text-ink-soft'
-              }`}
-            >
-              {l}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <DarkModeToggle className="h-9 w-9" />
+          <div className="flex rounded-full bg-paper-deep/60 p-1 text-xs font-bold">
+            {(['ru', 'en'] as const).map((l) => (
+              <button
+                key={l}
+                onClick={() => {
+                  setLang(l);
+                  saveLang(l);
+                }}
+                className={`rounded-full px-3 py-1.5 uppercase transition-colors ${
+                  lang === l ? 'bg-paper text-ink shadow-sm' : 'text-ink-soft'
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
