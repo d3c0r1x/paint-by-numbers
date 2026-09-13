@@ -9,7 +9,7 @@ export function DarkModeToggle({ className = '' }: { className?: string }) {
       type="button"
       onClick={toggleDarkMode}
       aria-label={darkMode ? 'Выключить тёмный режим' : 'Включить тёмный режим'}
-      className={`inline-flex items-center justify-center rounded-full transition-colors ${className}`}
+      className={`inline-flex items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30 ${className}`}
       style={{
         backgroundColor: darkMode ? 'rgba(245,240,232,0.12)' : 'rgba(28,25,23,0.08)',
         color: darkMode ? '#f5f0e8' : '#1c1917',

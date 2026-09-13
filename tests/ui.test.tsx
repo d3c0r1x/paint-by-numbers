@@ -186,7 +186,7 @@ describe('Button accessibility', () => {
       </Button>,
       { wrapper: ({ children }) => <form onSubmit={() => {}}>{children}</form> },
     );
-    const btn = screen.getByRole('button', { name: 'Click me' });
+    const btn = screen.getByRole('button', { name: 'Click me' }) as HTMLButtonElement;
     expect(btn.type).toBe('button');
   });
 });
