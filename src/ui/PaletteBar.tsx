@@ -1,17 +1,17 @@
-import { useEffect, useRef } from 'react'
-import type { PaletteEntry } from '../engine/types'
-import { symbolFor } from '../engine/symbols'
-import { ColorCircle } from './ColorCircle'
-import { IconPlus } from './icons'
+import { useEffect, useRef } from 'react';
+import type { PaletteEntry } from '../engine/types';
+import { symbolFor } from '../engine/symbols';
+import { ColorCircle } from './ColorCircle';
+import { IconPlus } from './icons';
 
 interface Props {
-  palette: PaletteEntry[]
-  customColors: string[]
-  activeIndex: number | null
-  activeCustom: string | null
-  onSelect: (index: number) => void
-  onSelectCustom: (hex: string) => void
-  onAddCustom: (hex: string) => void
+  palette: PaletteEntry[];
+  customColors: string[];
+  activeIndex: number | null;
+  activeCustom: string | null;
+  onSelect: (index: number) => void;
+  onSelectCustom: (hex: string) => void;
+  onAddCustom: (hex: string) => void;
 }
 
 export function PaletteBar({
@@ -23,13 +23,13 @@ export function PaletteBar({
   onSelectCustom,
   onAddCustom,
 }: Props) {
-  const colorInputRef = useRef<HTMLInputElement>(null)
-  const activeRef = useRef<HTMLDivElement | null>(null)
+  const colorInputRef = useRef<HTMLInputElement>(null);
+  const activeRef = useRef<HTMLDivElement | null>(null);
 
   // Auto-scroll the active circle into view (mouse wheel / touch scroll otherwise).
   useEffect(() => {
-    activeRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
-  }, [activeIndex, activeCustom])
+    activeRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [activeIndex, activeCustom]);
 
   return (
     <div className="pointer-events-auto flex items-center gap-2.5 rounded-[26px] border border-paper-deep bg-paper/95 px-3.5 py-2.5 shadow-[0_4px_20px_rgb(28_25_23/0.15)] backdrop-blur">
@@ -81,5 +81,5 @@ export function PaletteBar({
         <IconPlus size={18} />
       </button>
     </div>
-  )
+  );
 }

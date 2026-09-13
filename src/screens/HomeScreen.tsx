@@ -1,106 +1,103 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useAppStore } from '../store/useAppStore'
-import { translate, saveLang } from '../i18n'
-import {
-  listProjects,
-  getProject,
-  deleteProject,
-  blobToLabels,
-} from '../storage/projects'
-import type { Project } from '../storage/projects'
-import type { PipelineResult, PaletteEntry } from '../engine/types'
-import { getCatalogArtworks, type CatalogArtwork } from '../catalog'
-import { Button } from '../ui/Button'
-import { LogoMark, IconTrash, IconFolder } from '../ui/icons'
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAppStore } from '../store/useAppStore';
+import { translate, saveLang } from '../i18n';
+import { listProjects, getProject, deleteProject, blobToLabels } from '../storage/projects';
+import type { Project } from '../storage/projects';
+import type { PipelineResult, PaletteEntry } from '../engine/types';
+import { getCatalogArtworks, type CatalogArtwork } from '../catalog';
+import { Button } from '../ui/Button';
+import { LogoMark, IconTrash, IconFolder } from '../ui/icons';
 
-type ListedProject = Project & { thumbnail: string | null }
+type ListedProject = Project & { thumbnail: string | null };
 
 export function HomeScreen() {
-  const lang = useAppStore((s) => s.lang)
-  const setLang = useAppStore((s) => s.setLang)
-  const setSource = useAppStore((s) => s.setSource)
-  const setPipeline = useAppStore((s) => s.setPipeline)
-  const setProjectId = useAppStore((s) => s.setProjectId)
-  const setRestoredProject = useAppStore((s) => s.setRestoredProject)
-  const goTo = useAppStore((s) => s.goTo)
-  const [error, setError] = useState<string | null>(null)
-  const [fileName, setFileName] = useState<string | null>(null)
-  const [projects, setProjects] = useState<ListedProject[]>([])
-  const [busyId, setBusyId] = useState<string | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const catalog = getCatalogArtworks()
-  const catalogName = (artwork: CatalogArtwork) => lang === 'ru' ? artwork.title : artwork.titleEn
-  const catalogCategory = (artwork: CatalogArtwork) => lang === 'ru' ? artwork.category : artwork.categoryEn
+  const lang = useAppStore((s) => s.lang);
+  const setLang = useAppStore((s) => s.setLang);
+  const setSource = useAppStore((s) => s.setSource);
+  const setPipeline = useAppStore((s) => s.setPipeline);
+  const setProjectId = useAppStore((s) => s.setProjectId);
+  const setRestoredProject = useAppStore((s) => s.setRestoredProject);
+  const goTo = useAppStore((s) => s.goTo);
+  const [error, setError] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [projects, setProjects] = useState<ListedProject[]>([]);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const catalog = getCatalogArtworks();
+  const catalogName = (artwork: CatalogArtwork) =>
+    lang === 'ru' ? artwork.title : artwork.titleEn;
+  const catalogCategory = (artwork: CatalogArtwork) =>
+    lang === 'ru' ? artwork.category : artwork.categoryEn;
 
-  const t = (key: string) => translate(lang, key)
+  const t = (key: string) => translate(lang, key);
 
   const refresh = useCallback(() => {
     void listProjects()
       .then(setProjects)
-      .catch(() => setProjects([]))
-  }, [])
+      .catch(() => setProjects([]));
+  }, []);
 
   useEffect(() => {
-    refresh()
-  }, [refresh])
+    refresh();
+  }, [refresh]);
 
   function handleFile(file: File | undefined) {
-    setError(null)
-    if (!file) return
+    setError(null);
+    if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setError(t('home.error.notImage'))
-      return
+      setError(t('home.error.notImage'));
+      return;
     }
     // A fresh import must not inherit stale state from a previous session.
-    setPipeline(null)
-    setProjectId(null)
-    setFileName(file.name)
-    setSource(file, file.name)
-    goTo('processing')
+    setPipeline(null);
+    setProjectId(null);
+    setFileName(file.name);
+    setSource(file, file.name);
+    goTo('processing');
   }
 
   async function openCatalogArtwork(artwork: CatalogArtwork) {
-    setError(null)
-    setRestoredProject(null)
-    setPipeline(artwork.result)
-    setProjectId(null)
-    setSource(artwork.source, catalogName(artwork))
-    goTo('coloring')
+    setError(null);
+    setRestoredProject(null);
+    setPipeline(artwork.result);
+    setProjectId(null);
+    setSource(artwork.source, catalogName(artwork));
+    goTo('coloring');
   }
 
   async function openProject(id: string) {
-    setBusyId(id)
+    setBusyId(id);
     try {
-      const project = await getProject(id)
-      if (!project) return
-      const labels = await blobToLabels(project.labels)
+      const project = await getProject(id);
+      if (!project) return;
+      const labels = await blobToLabels(project.labels);
       const palette: PaletteEntry[] = project.palette.map((p) => ({
         index: p.colorIdx,
         lab: [0, 0, 0], // lab is only needed during conversion, not coloring
         hex: p.hex,
         pixelCount: 0,
-      }))
+      }));
       const result: PipelineResult = {
         width: project.width,
         height: project.height,
         labels,
         palette,
         regions: project.regions,
-      }
-      setPipeline(result)
-      setProjectId(project.id)
-      setRestoredProject({ customColors: project.customColors, strokes: project.strokes })
-      setSource(project.sourceImage, project.name)
-      goTo('coloring')
+      };
+      setPipeline(result);
+      setProjectId(project.id);
+      setRestoredProject({ customColors: project.customColors, strokes: project.strokes });
+      setSource(project.sourceImage, project.name);
+      goTo('coloring');
     } finally {
-      setBusyId(null)
+      setBusyId(null);
     }
   }
 
   async function removeProject(id: string) {
-    if (!window.confirm(t('common.confirmDelete'))) return
-    await deleteProject(id)
-    refresh()
+    if (!window.confirm(t('common.confirmDelete'))) return;
+    await deleteProject(id);
+    refresh();
   }
 
   return (
@@ -115,8 +112,8 @@ export function HomeScreen() {
             <button
               key={l}
               onClick={() => {
-                setLang(l)
-                saveLang(l)
+                setLang(l);
+                saveLang(l);
               }}
               className={`rounded-full px-3 py-1.5 uppercase transition-colors ${
                 lang === l ? 'bg-paper text-ink shadow-sm' : 'text-ink-soft'
@@ -136,8 +133,8 @@ export function HomeScreen() {
           accept="image/*"
           className="hidden"
           onChange={(e) => {
-            handleFile(e.target.files?.[0])
-            e.target.value = ''
+            handleFile(e.target.files?.[0]);
+            e.target.value = '';
           }}
         />
         <button
@@ -219,7 +216,9 @@ export function HomeScreen() {
             <span aria-hidden="true">✦</span>
             {t('home.catalog')}
           </h2>
-          <span className="text-xs text-ink-faint">{catalog.length} {lang === 'ru' ? 'сюжетов' : 'paintings'}</span>
+          <span className="text-xs text-ink-faint">
+            {catalog.length} {lang === 'ru' ? 'сюжетов' : 'paintings'}
+          </span>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {catalog.map((artwork) => (
@@ -229,9 +228,18 @@ export function HomeScreen() {
               className="group overflow-hidden rounded-2xl border border-paper-deep bg-paper-warm/60 text-left transition-transform active:scale-[0.98]"
               aria-label={`${t('common.open')}: ${catalogName(artwork)}`}
             >
-              <img src={artwork.previewUrl} alt="" className="aspect-[3/2] w-full object-cover transition-transform group-hover:scale-[1.03]" />
-              <span className="block truncate px-2.5 pt-2 text-sm font-semibold">{catalogName(artwork)}</span>
-              <span className="block px-2.5 pb-2.5 text-xs text-ink-faint">{catalogCategory(artwork)} · {artwork.palette.length} {lang === 'ru' ? 'цветов' : 'colors'}</span>
+              <img
+                src={artwork.previewUrl}
+                alt=""
+                className="aspect-[3/2] w-full object-cover transition-transform group-hover:scale-[1.03]"
+              />
+              <span className="block truncate px-2.5 pt-2 text-sm font-semibold">
+                {catalogName(artwork)}
+              </span>
+              <span className="block px-2.5 pb-2.5 text-xs text-ink-faint">
+                {catalogCategory(artwork)} · {artwork.palette.length}{' '}
+                {lang === 'ru' ? 'цветов' : 'colors'}
+              </span>
             </button>
           ))}
         </div>
@@ -239,7 +247,9 @@ export function HomeScreen() {
 
       {/* Catalog teaser */}
       <button
-        onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+        onClick={() =>
+          document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
         className="relative mt-auto flex aspect-[16/7] flex-col justify-end overflow-hidden rounded-3xl p-4 text-left transition-transform active:scale-[0.99]"
         style={{
           background:
@@ -253,5 +263,5 @@ export function HomeScreen() {
         <span className="text-xs text-white/75">{t('home.catalogSub')}</span>
       </button>
     </div>
-  )
+  );
 }

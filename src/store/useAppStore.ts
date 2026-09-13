@@ -1,32 +1,32 @@
-import { create } from 'zustand'
-import type { PipelineResult } from '../engine/types'
-import type { PaintAction } from '../canvas/BrushEngine'
-import { detectLang, type Lang } from '../i18n'
+import { create } from 'zustand';
+import type { PipelineResult } from '../engine/types';
+import type { PaintAction } from '../canvas/BrushEngine';
+import { detectLang, type Lang } from '../i18n';
 
-export type Screen = 'home' | 'processing' | 'coloring'
+export type Screen = 'home' | 'processing' | 'coloring';
 
 interface AppState {
-  screen: Screen
-  goTo: (screen: Screen) => void
+  screen: Screen;
+  goTo: (screen: Screen) => void;
 
-  lang: Lang
-  setLang: (lang: Lang) => void
+  lang: Lang;
+  setLang: (lang: Lang) => void;
 
-  sourceImage: Blob | null
-  sourceName: string
-  setSource: (image: Blob | null, name?: string) => void
+  sourceImage: Blob | null;
+  sourceName: string;
+  setSource: (image: Blob | null, name?: string) => void;
 
-  pipeline: PipelineResult | null
-  setPipeline: (result: PipelineResult | null) => void
+  pipeline: PipelineResult | null;
+  setPipeline: (result: PipelineResult | null) => void;
 
-  projectId: string | null
-  setProjectId: (id: string | null) => void
+  projectId: string | null;
+  setProjectId: (id: string | null) => void;
 
   /** Custom colors + paint actions restored from a saved project (consumed by ColoringScreen). */
-  restoredProject: { customColors: string[]; strokes: PaintAction[] } | null
-  setRestoredProject: (restored: { customColors: string[]; strokes: PaintAction[] } | null) => void
+  restoredProject: { customColors: string[]; strokes: PaintAction[] } | null;
+  setRestoredProject: (restored: { customColors: string[]; strokes: PaintAction[] } | null) => void;
 
-  reset: () => void
+  reset: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -58,4 +58,4 @@ export const useAppStore = create<AppState>((set) => ({
       restoredProject: null,
       screen: 'home',
     }),
-}))
+}));

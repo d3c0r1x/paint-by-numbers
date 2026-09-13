@@ -1,19 +1,25 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useAppStore } from '../store/useAppStore'
-import { translate } from '../i18n'
-import { useCanvasLayers } from '../canvas/useCanvasLayers'
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAppStore } from '../store/useAppStore';
+import { translate } from '../i18n';
+import { useCanvasLayers } from '../canvas/useCanvasLayers';
 import {
   BrushEngine,
   pointsFromPointerEvent,
   type FillAllAction,
   type PaintAction,
   type StrokePoint,
-} from '../canvas/BrushEngine'
-import { ViewTransform } from '../canvas/ViewTransform'
-import { PaletteBar } from '../ui/PaletteBar'
-import { saveProject } from '../storage/projects'
-import { composeExport, composeLegendExport, canvasToBlob, downloadBlob, shareBlob } from '../export/imageExport'
-import { Button, IconButton } from '../ui/Button'
+} from '../canvas/BrushEngine';
+import { ViewTransform } from '../canvas/ViewTransform';
+import { PaletteBar } from '../ui/PaletteBar';
+import { saveProject } from '../storage/projects';
+import {
+  composeExport,
+  composeLegendExport,
+  canvasToBlob,
+  downloadBlob,
+  shareBlob,
+} from '../export/imageExport';
+import { Button, IconButton } from '../ui/Button';
 import {
   IconUndo,
   IconRedo,
@@ -31,110 +37,117 @@ import {
   IconCheck,
   IconEye,
   IconWand,
-} from '../ui/icons'
+} from '../ui/icons';
 
-const MAX_UNDO = 50 // SPEC Task 13: hard history cap
+const MAX_UNDO = 50; // SPEC Task 13: hard history cap
 
 /** Developer test controls: any dev build, or any build opened with ?dev=1. */
 const DEV_TOOLS =
   import.meta.env.DEV ||
-  (typeof location !== 'undefined' && new URLSearchParams(location.search).has('dev'))
+  (typeof location !== 'undefined' && new URLSearchParams(location.search).has('dev'));
 
 export function ColoringScreen() {
-  const lang = useAppStore((s) => s.lang)
-  const result = useAppStore((s) => s.pipeline)
-  const sourceImage = useAppStore((s) => s.sourceImage)
-  const sourceName = useAppStore((s) => s.sourceName)
-  const projectId = useAppStore((s) => s.projectId)
-  const setProjectId = useAppStore((s) => s.setProjectId)
-  const restored = useAppStore((s) => s.restoredProject)
-  const setRestoredProject = useAppStore((s) => s.setRestoredProject)
-  const goTo = useAppStore((s) => s.goTo)
-  const reset = useAppStore((s) => s.reset)
+  const lang = useAppStore((s) => s.lang);
+  const result = useAppStore((s) => s.pipeline);
+  const sourceImage = useAppStore((s) => s.sourceImage);
+  const sourceName = useAppStore((s) => s.sourceName);
+  const projectId = useAppStore((s) => s.projectId);
+  const setProjectId = useAppStore((s) => s.setProjectId);
+  const restored = useAppStore((s) => s.restoredProject);
+  const setRestoredProject = useAppStore((s) => s.setRestoredProject);
+  const goTo = useAppStore((s) => s.goTo);
+  const reset = useAppStore((s) => s.reset);
 
-  const t = useCallback((key: string, args?: Record<string, string | number>) =>
-    translate(lang, key, args), [lang])
+  const t = useCallback(
+    (key: string, args?: Record<string, string | number>) => translate(lang, key, args),
+    [lang],
+  );
 
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const layers = useCanvasLayers(result)
-  const viewRef = useRef<ViewTransform>(new ViewTransform())
-  const engineRef = useRef<BrushEngine | null>(null)
-  const pointersRef = useRef(new Map<number, { clientX: number; clientY: number }>())
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const layers = useCanvasLayers(result);
+  const viewRef = useRef<ViewTransform>(new ViewTransform());
+  const engineRef = useRef<BrushEngine | null>(null);
+  const pointersRef = useRef(new Map<number, { clientX: number; clientY: number }>());
   const pinchRef = useRef<{
-    dist: number
-    mid: { x: number; y: number }
-    scale: number
-    canvasPoint: { x: number; y: number }
-  } | null>(null)
-  const panningRef = useRef<{ last: { clientX: number; clientY: number } } | null>(null)
-  const paintingRef = useRef(false)
+    dist: number;
+    mid: { x: number; y: number };
+    scale: number;
+    canvasPoint: { x: number; y: number };
+  } | null>(null);
+  const panningRef = useRef<{ last: { clientX: number; clientY: number } } | null>(null);
+  const paintingRef = useRef(false);
 
-  const strokesRef = useRef<PaintAction[]>([])
-  const redoRef = useRef<PaintAction[]>([])
+  const strokesRef = useRef<PaintAction[]>([]);
+  const redoRef = useRef<PaintAction[]>([]);
   /** Undo/redo button enablement derives from these counters (re-render trigger). */
-  const [undoCount, setUndoCount] = useState(0)
-  const [redoCount, setRedoCount] = useState(0)
+  const [undoCount, setUndoCount] = useState(0);
+  const [redoCount, setRedoCount] = useState(0);
 
-  const [activeIndex, setActiveIndex] = useState<number | null>(0)
-  const [activeCustom, setActiveCustom] = useState<string | null>(null)
-  const [customColors, setCustomColors] = useState<string[]>([])
-  const [tool, setTool] = useState<'brush' | 'eraser'>('brush')
-  const [brushSize, setBrushSize] = useState(18)
-  const [opacity, setOpacity] = useState(1)
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [exportOpen, setExportOpen] = useState(false)
-  const [finishOpen, setFinishOpen] = useState(false)
-  const [fillPreview, setFillPreview] = useState(false)
-  const [withOutlines, setWithOutlines] = useState(false)
-  const [withLegend, setWithLegend] = useState(true)
-  const [savedTick, setSavedTick] = useState(0)
-  const dirtyRef = useRef(false)
+  const [activeIndex, setActiveIndex] = useState<number | null>(0);
+  const [activeCustom, setActiveCustom] = useState<string | null>(null);
+  const [customColors, setCustomColors] = useState<string[]>([]);
+  const [tool, setTool] = useState<'brush' | 'eraser'>('brush');
+  const [brushSize, setBrushSize] = useState(18);
+  const [opacity, setOpacity] = useState(1);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [finishOpen, setFinishOpen] = useState(false);
+  const [fillPreview, setFillPreview] = useState(false);
+  const [withOutlines, setWithOutlines] = useState(false);
+  const [withLegend, setWithLegend] = useState(true);
+  const [savedTick, setSavedTick] = useState(0);
+  const dirtyRef = useRef(false);
 
-  const palette = result?.palette ?? []
+  const palette = result?.palette ?? [];
 
   // Restore from a saved project once (strokes repaint, contours already drawn from labels).
   useEffect(() => {
-    if (!restored) return
-    setCustomColors(restored.customColors)
-    strokesRef.current = restored.strokes
-    redoRef.current = []
-    setUndoCount(restored.strokes.length)
-    setRedoCount(0)
-    layers.repaintPaint(restored.strokes)
-    setRestoredProject(null)
+    if (!restored) return;
+    setCustomColors(restored.customColors);
+    strokesRef.current = restored.strokes;
+    redoRef.current = [];
+    setUndoCount(restored.strokes.length);
+    setRedoCount(0);
+    layers.repaintPaint(restored.strokes);
+    setRestoredProject(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restored])
+  }, [restored]);
 
   // Initial view fit.
   useEffect(() => {
-    const container = containerRef.current
-    if (!container || !result) return
-    viewRef.current.fitTo(container.clientWidth, container.clientHeight, result.width, result.height)
-    viewRef.current.apply(container.firstElementChild as HTMLElement)
+    const container = containerRef.current;
+    if (!container || !result) return;
+    viewRef.current.fitTo(
+      container.clientWidth,
+      container.clientHeight,
+      result.width,
+      result.height,
+    );
+    viewRef.current.apply(container.firstElementChild as HTMLElement);
     const ro = new ResizeObserver(() => {
-      viewRef.current.apply(container.firstElementChild as HTMLElement)
-    })
-    ro.observe(container)
-    return () => ro.disconnect()
-  }, [result])
+      viewRef.current.apply(container.firstElementChild as HTMLElement);
+    });
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [result]);
 
   const applyView = useCallback(() => {
-    const container = containerRef.current
-    if (container) viewRef.current.apply(container.firstElementChild as HTMLElement)
-  }, [])
+    const container = containerRef.current;
+    if (container) viewRef.current.apply(container.firstElementChild as HTMLElement);
+  }, []);
 
   // Highlight regions of the active palette color (setHighlight self-guards
   // against redundant redraws, so the loose dependency is fine).
   useEffect(() => {
-    layers.setHighlight(activeCustom ? null : activeIndex)
-  }, [activeIndex, activeCustom, layers])
+    layers.setHighlight(activeCustom ? null : activeIndex);
+  }, [activeIndex, activeCustom, layers]);
 
   useEffect(() => {
-    layers.setFillPreview(fillPreview)
-  }, [fillPreview])
+    layers.setFillPreview(fillPreview);
+  }, [fillPreview]);
 
   const save = useCallback(async (): Promise<void> => {
-    if (!result || !sourceImage) return
+    if (!result || !sourceImage) return;
     const id = await saveProject({
       id: projectId,
       name: sourceName || t('app.title'),
@@ -142,163 +155,163 @@ export function ColoringScreen() {
       result,
       customColors,
       strokes: strokesRef.current,
-    })
-    setProjectId(id)
-    dirtyRef.current = false
-    setSavedTick((v) => v + 1)
-  }, [result, sourceImage, sourceName, projectId, customColors, setProjectId, t])
+    });
+    setProjectId(id);
+    dirtyRef.current = false;
+    setSavedTick((v) => v + 1);
+  }, [result, sourceImage, sourceName, projectId, customColors, setProjectId, t]);
 
   // Autosave when leaving the coloring screen.
   useEffect(() => {
     return () => {
       if (dirtyRef.current && result && sourceImage) {
-        void save()
+        void save();
       }
-      setRestoredProject(null)
-    }
-  }, [result, sourceImage, save, setRestoredProject])
+      setRestoredProject(null);
+    };
+  }, [result, sourceImage, save, setRestoredProject]);
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
-    if (!result) return
-    const container = containerRef.current
-    const paintCanvas = layers.paintRef.current
-    if (!container || !paintCanvas) return
+    if (!result) return;
+    const container = containerRef.current;
+    const paintCanvas = layers.paintRef.current;
+    if (!container || !paintCanvas) return;
     try {
-      ;(e.target as Element).setPointerCapture?.(e.pointerId)
+      (e.target as Element).setPointerCapture?.(e.pointerId);
     } catch {
       // pointer already inactive (e.g. synthetic events) — capture is optional
     }
-    pointersRef.current.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY })
+    pointersRef.current.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
 
     if (pointersRef.current.size === 2) {
       // Second finger cancels painting; hand control to pinch/pan.
       if (paintingRef.current) {
-        engineRef.current?.abort()
-        paintingRef.current = false
+        engineRef.current?.abort();
+        paintingRef.current = false;
       }
-      panningRef.current = null
-      const [a, b] = [...pointersRef.current.values()]
-      const rect = container.getBoundingClientRect()
-      const midX = (a.clientX + b.clientX) / 2
-      const midY = (a.clientY + b.clientY) / 2
-      const view = viewRef.current
+      panningRef.current = null;
+      const [a, b] = [...pointersRef.current.values()];
+      const rect = container.getBoundingClientRect();
+      const midX = (a.clientX + b.clientX) / 2;
+      const midY = (a.clientY + b.clientY) / 2;
+      const view = viewRef.current;
       pinchRef.current = {
         dist: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
         mid: { x: midX - rect.left, y: midY - rect.top },
         scale: view.scale,
         canvasPoint: view.toCanvas(midX, midY, rect),
-      }
-      return
+      };
+      return;
     }
-    if (pointersRef.current.size > 2) return
-    if (e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return
+    if (pointersRef.current.size > 2) return;
+    if (e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
 
-    const view = viewRef.current
-    const rect = container.getBoundingClientRect()
-    const p = view.toCanvas(e.clientX, e.clientY, rect)
-    engineRef.current = new BrushEngine(paintCanvas.getContext('2d')!)
+    const view = viewRef.current;
+    const rect = container.getBoundingClientRect();
+    const p = view.toCanvas(e.clientX, e.clientY, rect);
+    engineRef.current = new BrushEngine(paintCanvas.getContext('2d')!);
     engineRef.current.begin(
       { tool, color, size: brushSize, opacity },
       { x: p.x, y: p.y, pressure: e.pressure > 0 ? e.pressure : 0.5 },
-    )
-    paintingRef.current = true
+    );
+    paintingRef.current = true;
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
-    if (!pointersRef.current.has(e.pointerId)) return
-    pointersRef.current.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY })
+    if (!pointersRef.current.has(e.pointerId)) return;
+    pointersRef.current.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
 
     if (pinchRef.current && pointersRef.current.size >= 2) {
-      const [a, b] = [...pointersRef.current.values()]
-      const rect = containerRef.current!.getBoundingClientRect()
+      const [a, b] = [...pointersRef.current.values()];
+      const rect = containerRef.current!.getBoundingClientRect();
       const nowMid = {
         x: (a.clientX + b.clientX) / 2 - rect.left,
         y: (a.clientY + b.clientY) / 2 - rect.top,
-      }
+      };
       viewRef.current.applyPinch(
         pinchRef.current,
         Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
         nowMid,
-      )
-      applyView()
-      return
+      );
+      applyView();
+      return;
     }
 
     // Single-finger pan when the brush is idle and pan started on the container.
     if (panningRef.current && !paintingRef.current) {
-      const last = panningRef.current.last
-      viewRef.current.offsetX += e.clientX - last.clientX
-      viewRef.current.offsetY += e.clientY - last.clientY
-      panningRef.current.last = { clientX: e.clientX, clientY: e.clientY }
-      applyView()
-      return
+      const last = panningRef.current.last;
+      viewRef.current.offsetX += e.clientX - last.clientX;
+      viewRef.current.offsetY += e.clientY - last.clientY;
+      panningRef.current.last = { clientX: e.clientX, clientY: e.clientY };
+      applyView();
+      return;
     }
 
-    if (!paintingRef.current || !engineRef.current) return
+    if (!paintingRef.current || !engineRef.current) return;
 
-    const rect = containerRef.current!.getBoundingClientRect()
+    const rect = containerRef.current!.getBoundingClientRect();
     const points: StrokePoint[] = pointsFromPointerEvent(e.nativeEvent, (cx, cy) => {
-      const p = viewRef.current.toCanvas(cx, cy, rect)
-      return { x: p.x, y: p.y }
-    })
-    for (const point of points) engineRef.current!.extend(point)
+      const p = viewRef.current.toCanvas(cx, cy, rect);
+      return { x: p.x, y: p.y };
+    });
+    for (const point of points) engineRef.current!.extend(point);
   }
 
   function handlePointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
-    pointersRef.current.delete(e.pointerId)
-    if (pointersRef.current.size < 2) pinchRef.current = null
+    pointersRef.current.delete(e.pointerId);
+    if (pointersRef.current.size < 2) pinchRef.current = null;
 
     if (paintingRef.current && engineRef.current) {
-      const stroke = engineRef.current.commit()
-      paintingRef.current = false
-      engineRef.current = null
+      const stroke = engineRef.current.commit();
+      paintingRef.current = false;
+      engineRef.current = null;
       if (stroke) {
-        redoRef.current = []
-        strokesRef.current = [...strokesRef.current, stroke].slice(-MAX_UNDO)
-        setUndoCount(strokesRef.current.length)
-        setRedoCount(0)
-        dirtyRef.current = true
+        redoRef.current = [];
+        strokesRef.current = [...strokesRef.current, stroke].slice(-MAX_UNDO);
+        setUndoCount(strokesRef.current.length);
+        setRedoCount(0);
+        dirtyRef.current = true;
       }
-      return
+      return;
     }
     // Single-finger pan ends when the last pointer lifts.
-    if (panningRef.current && pointersRef.current.size === 0) panningRef.current = null
+    if (panningRef.current && pointersRef.current.size === 0) panningRef.current = null;
   }
 
   const undo = useCallback(() => {
-    const cur = strokesRef.current
-    if (cur.length === 0) return
-    const last = cur[cur.length - 1]
-    redoRef.current = [...redoRef.current, last]
-    strokesRef.current = cur.slice(0, -1)
-    setUndoCount(strokesRef.current.length)
-    setRedoCount(redoRef.current.length)
-    layers.repaintPaint(strokesRef.current)
-    dirtyRef.current = true
-  }, [layers])
+    const cur = strokesRef.current;
+    if (cur.length === 0) return;
+    const last = cur[cur.length - 1];
+    redoRef.current = [...redoRef.current, last];
+    strokesRef.current = cur.slice(0, -1);
+    setUndoCount(strokesRef.current.length);
+    setRedoCount(redoRef.current.length);
+    layers.repaintPaint(strokesRef.current);
+    dirtyRef.current = true;
+  }, [layers]);
 
   const redo = useCallback(() => {
-    const last = redoRef.current[redoRef.current.length - 1]
-    if (!last) return
-    redoRef.current = redoRef.current.slice(0, -1)
-    strokesRef.current = [...strokesRef.current, last].slice(-MAX_UNDO)
-    setUndoCount(strokesRef.current.length)
-    setRedoCount(redoRef.current.length)
-    layers.repaintPaint(strokesRef.current)
-    dirtyRef.current = true
-  }, [layers])
+    const last = redoRef.current[redoRef.current.length - 1];
+    if (!last) return;
+    redoRef.current = redoRef.current.slice(0, -1);
+    strokesRef.current = [...strokesRef.current, last].slice(-MAX_UNDO);
+    setUndoCount(strokesRef.current.length);
+    setRedoCount(redoRef.current.length);
+    layers.repaintPaint(strokesRef.current);
+    dirtyRef.current = true;
+  }, [layers]);
 
   /** "Finish for me": fill remaining areas, recorded as an undoable action. */
   const finishForMe = useCallback(() => {
-    const fill: FillAllAction = { tool: 'fill-all' }
-    layers.applyFillAll()
-    setFinishOpen(false)
-    redoRef.current = []
-    strokesRef.current = [...strokesRef.current, fill].slice(-MAX_UNDO)
-    setUndoCount(strokesRef.current.length)
-    setRedoCount(0)
-    dirtyRef.current = true
-  }, [layers])
+    const fill: FillAllAction = { tool: 'fill-all' };
+    layers.applyFillAll();
+    setFinishOpen(false);
+    redoRef.current = [];
+    strokesRef.current = [...strokesRef.current, fill].slice(-MAX_UNDO);
+    setUndoCount(strokesRef.current.length);
+    setRedoCount(0);
+    dirtyRef.current = true;
+  }, [layers]);
 
   if (!result) {
     return (
@@ -308,12 +321,13 @@ export function ColoringScreen() {
           {t('processing.back')}
         </Button>
       </div>
-    )
+    );
   }
 
-  const canUndo = undoCount > 0
-  const canRedo = redoCount > 0
-  const color = activeCustom ?? (activeIndex != null ? palette[activeIndex]?.hex : undefined) ?? '#000000'
+  const canUndo = undoCount > 0;
+  const canRedo = redoCount > 0;
+  const color =
+    activeCustom ?? (activeIndex != null ? palette[activeIndex]?.hex : undefined) ?? '#000000';
 
   return (
     <div className="relative flex h-full flex-col">
@@ -359,8 +373,8 @@ export function ColoringScreen() {
           <IconButton
             label={t('coloring.home')}
             onClick={() => {
-              if (dirtyRef.current) void save()
-              goTo('home')
+              if (dirtyRef.current) void save();
+              goTo('home');
             }}
           >
             <IconHome />
@@ -373,14 +387,21 @@ export function ColoringScreen() {
         ref={containerRef}
         className="relative min-h-0 flex-1 overflow-hidden bg-paper-warm"
         onWheel={(e) => {
-          e.preventDefault()
-          const rect = containerRef.current!.getBoundingClientRect()
-          viewRef.current.zoomAt(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.15 : 1 / 1.15)
-          applyView()
+          e.preventDefault();
+          const rect = containerRef.current!.getBoundingClientRect();
+          viewRef.current.zoomAt(
+            e.clientX - rect.left,
+            e.clientY - rect.top,
+            e.deltaY < 0 ? 1.15 : 1 / 1.15,
+          );
+          applyView();
         }}
       >
         <div className="absolute left-0 top-0">
-          <div className="relative shadow-[0_2px_16px_rgb(28_25_23/0.12)]" style={{ width: result.width, height: result.height }}>
+          <div
+            className="relative shadow-[0_2px_16px_rgb(28_25_23/0.12)]"
+            style={{ width: result.width, height: result.height }}
+          >
             <canvas ref={layers.bgRef} className="absolute inset-0" />
             <canvas ref={layers.lineRef} className="absolute inset-0" />
             <canvas ref={layers.highlightRef} className="pointer-events-none absolute inset-0" />
@@ -399,25 +420,37 @@ export function ColoringScreen() {
 
         {/* Zoom stack for desktop testing (Task 12) */}
         <div className="absolute right-3 top-3 z-10 flex flex-col overflow-hidden rounded-2xl border border-paper-deep bg-paper/95 shadow-md backdrop-blur">
-          <IconButton label={t('coloring.zoomIn')} onClick={() => {
-            const rect = containerRef.current!.getBoundingClientRect()
-            viewRef.current.zoomAt(rect.width / 2, rect.height / 2, 1.25)
-            applyView()
-          }} className="!h-11 !w-11 !rounded-none">
+          <IconButton
+            label={t('coloring.zoomIn')}
+            onClick={() => {
+              const rect = containerRef.current!.getBoundingClientRect();
+              viewRef.current.zoomAt(rect.width / 2, rect.height / 2, 1.25);
+              applyView();
+            }}
+            className="!h-11 !w-11 !rounded-none"
+          >
             <IconZoomIn size={18} />
           </IconButton>
-          <IconButton label={t('coloring.zoomOut')} onClick={() => {
-            const rect = containerRef.current!.getBoundingClientRect()
-            viewRef.current.zoomAt(rect.width / 2, rect.height / 2, 1 / 1.25)
-            applyView()
-          }} className="!h-11 !w-11 !rounded-none">
+          <IconButton
+            label={t('coloring.zoomOut')}
+            onClick={() => {
+              const rect = containerRef.current!.getBoundingClientRect();
+              viewRef.current.zoomAt(rect.width / 2, rect.height / 2, 1 / 1.25);
+              applyView();
+            }}
+            className="!h-11 !w-11 !rounded-none"
+          >
             <IconZoomOut size={18} />
           </IconButton>
-          <IconButton label={t('coloring.zoomFit')} onClick={() => {
-            const rect = containerRef.current!.getBoundingClientRect()
-            viewRef.current.fitTo(rect.width, rect.height, result.width, result.height)
-            applyView()
-          }} className="!h-11 !w-11 !rounded-none border-t border-paper-deep">
+          <IconButton
+            label={t('coloring.zoomFit')}
+            onClick={() => {
+              const rect = containerRef.current!.getBoundingClientRect();
+              viewRef.current.fitTo(rect.width, rect.height, result.width, result.height);
+              applyView();
+            }}
+            className="!h-11 !w-11 !rounded-none border-t border-paper-deep"
+          >
             <IconFit size={18} />
           </IconButton>
         </div>
@@ -444,21 +477,21 @@ export function ColoringScreen() {
           activeIndex={activeIndex}
           activeCustom={activeCustom}
           onSelect={(i) => {
-            setActiveIndex(i)
-            setActiveCustom(null)
-            setTool('brush')
+            setActiveIndex(i);
+            setActiveCustom(null);
+            setTool('brush');
           }}
           onSelectCustom={(hex) => {
-            setActiveCustom(hex)
-            setActiveIndex(null)
-            setTool('brush')
+            setActiveCustom(hex);
+            setActiveIndex(null);
+            setTool('brush');
           }}
           onAddCustom={(hex) => {
-            setCustomColors((prev) => (prev.includes(hex) ? prev : [...prev, hex]))
-            setActiveCustom(hex)
-            setActiveIndex(null)
-            setTool('brush')
-            dirtyRef.current = true
+            setCustomColors((prev) => (prev.includes(hex) ? prev : [...prev, hex]));
+            setActiveCustom(hex);
+            setActiveIndex(null);
+            setTool('brush');
+            dirtyRef.current = true;
           }}
         />
       </div>
@@ -472,7 +505,9 @@ export function ColoringScreen() {
                 key={tl}
                 onClick={() => setTool(tl)}
                 className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
-                  tool === tl ? 'bg-ink text-paper' : 'border border-paper-deep bg-paper text-ink-soft'
+                  tool === tl
+                    ? 'bg-ink text-paper'
+                    : 'border border-paper-deep bg-paper text-ink-soft'
                 }`}
               >
                 {tl === 'brush' ? <IconBrush size={16} /> : <IconEraser size={16} />}
@@ -484,12 +519,26 @@ export function ColoringScreen() {
             {t('coloring.brushSize')}
             <span className="font-semibold text-ink">{brushSize}px</span>
           </label>
-          <input type="range" min={2} max={60} value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} className="pbn-range mb-3 w-full" />
+          <input
+            type="range"
+            min={2}
+            max={60}
+            value={brushSize}
+            onChange={(e) => setBrushSize(Number(e.target.value))}
+            className="pbn-range mb-3 w-full"
+          />
           <label className="mb-1 flex items-baseline justify-between text-xs text-ink-soft">
             {t('coloring.opacity')}
             <span className="font-semibold text-ink">{Math.round(opacity * 100)}%</span>
           </label>
-          <input type="range" min={10} max={100} value={Math.round(opacity * 100)} onChange={(e) => setOpacity(Number(e.target.value) / 100)} className="pbn-range w-full" />
+          <input
+            type="range"
+            min={10}
+            max={100}
+            value={Math.round(opacity * 100)}
+            onChange={(e) => setOpacity(Number(e.target.value) / 100)}
+            className="pbn-range w-full"
+          />
         </Sheet>
       )}
 
@@ -518,12 +567,12 @@ export function ColoringScreen() {
             <Button
               variant="primary"
               onClick={async () => {
-                const paint = layers.paintRef.current
-                if (!paint) return
+                const paint = layers.paintRef.current;
+                if (!paint) return;
                 const canvas = withLegend
                   ? await composeLegendExport({ result, paintCanvas: paint, withOutlines })
-                  : await composeExport({ result, paintCanvas: paint, withOutlines })
-                downloadBlob(await canvasToBlob(canvas, 'image/png'), 'paint-by-numbers.png')
+                  : await composeExport({ result, paintCanvas: paint, withOutlines });
+                downloadBlob(await canvasToBlob(canvas, 'image/png'), 'paint-by-numbers.png');
               }}
             >
               <IconDownload size={16} />
@@ -532,12 +581,15 @@ export function ColoringScreen() {
             <Button
               variant="secondary"
               onClick={async () => {
-                const paint = layers.paintRef.current
-                if (!paint) return
+                const paint = layers.paintRef.current;
+                if (!paint) return;
                 const canvas = withLegend
                   ? await composeLegendExport({ result, paintCanvas: paint, withOutlines })
-                  : await composeExport({ result, paintCanvas: paint, withOutlines })
-                downloadBlob(await canvasToBlob(canvas, 'image/jpeg', 0.92), 'paint-by-numbers.jpg')
+                  : await composeExport({ result, paintCanvas: paint, withOutlines });
+                downloadBlob(
+                  await canvasToBlob(canvas, 'image/jpeg', 0.92),
+                  'paint-by-numbers.jpg',
+                );
               }}
             >
               <IconDownload size={16} />
@@ -546,14 +598,14 @@ export function ColoringScreen() {
             <Button
               variant="secondary"
               onClick={async () => {
-                const paint = layers.paintRef.current
-                if (!paint) return
+                const paint = layers.paintRef.current;
+                if (!paint) return;
                 const canvas = withLegend
                   ? await composeLegendExport({ result, paintCanvas: paint, withOutlines })
-                  : await composeExport({ result, paintCanvas: paint, withOutlines })
-                const blob = await canvasToBlob(canvas, 'image/png')
-                const outcome = await shareBlob(blob, 'paint-by-numbers.png')
-                if (outcome === 'unsupported') downloadBlob(blob, 'paint-by-numbers.png')
+                  : await composeExport({ result, paintCanvas: paint, withOutlines });
+                const blob = await canvasToBlob(canvas, 'image/png');
+                const outcome = await shareBlob(blob, 'paint-by-numbers.png');
+                if (outcome === 'unsupported') downloadBlob(blob, 'paint-by-numbers.png');
               }}
             >
               <IconShare size={16} />
@@ -579,12 +631,23 @@ export function ColoringScreen() {
         </Sheet>
       )}
     </div>
-  )
+  );
 }
 
-function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+function Sheet({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="absolute inset-0 z-30 flex items-end justify-center bg-ink/40" onClick={onClose}>
+    <div
+      className="absolute inset-0 z-30 flex items-end justify-center bg-ink/40"
+      onClick={onClose}
+    >
       <div
         className="pbn-rise w-full max-w-md rounded-t-3xl border-t border-paper-deep bg-paper p-5 pb-[calc(env(safe-area-inset-bottom,0px)+28px)] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -602,5 +665,5 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
         {children}
       </div>
     </div>
-  )
+  );
 }

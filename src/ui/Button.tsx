@@ -1,23 +1,29 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 const VARIANTS: Record<Variant, string> = {
   primary: 'bg-ink text-paper shadow-sm active:opacity-85',
   secondary: 'bg-paper text-ink border border-paper-deep active:bg-paper-deep',
   ghost: 'text-ink-soft active:bg-paper-deep',
   danger: 'bg-accent/10 text-accent active:bg-accent/20',
-}
+};
 
 interface ButtonProps {
-  variant?: Variant
-  onClick?: () => void
-  disabled?: boolean
-  className?: string
-  children: ReactNode
+  variant?: Variant;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  children: ReactNode;
 }
 
-export function Button({ variant = 'primary', onClick, disabled, className = '', children }: ButtonProps) {
+export function Button({
+  variant = 'primary',
+  onClick,
+  disabled,
+  className = '',
+  children,
+}: ButtonProps) {
   return (
     <button
       onClick={onClick}
@@ -26,20 +32,27 @@ export function Button({ variant = 'primary', onClick, disabled, className = '',
     >
       {children}
     </button>
-  )
+  );
 }
 
 interface IconButtonProps {
-  label: string
-  onClick?: () => void
-  disabled?: boolean
-  active?: boolean
-  className?: string
-  children: ReactNode
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  active?: boolean;
+  className?: string;
+  children: ReactNode;
 }
 
 /** Square toolbar button for top bars and floating stacks. */
-export function IconButton({ label, onClick, disabled, active, className = '', children }: IconButtonProps) {
+export function IconButton({
+  label,
+  onClick,
+  disabled,
+  active,
+  className = '',
+  children,
+}: IconButtonProps) {
   return (
     <button
       onClick={onClick}
@@ -52,5 +65,5 @@ export function IconButton({ label, onClick, disabled, active, className = '', c
     >
       {children}
     </button>
-  )
+  );
 }

@@ -1,12 +1,12 @@
-import { useAppStore } from './store/useAppStore'
-import { HomeScreen } from './screens/HomeScreen'
-import { ProcessingScreen } from './screens/ProcessingScreen'
-import { ColoringScreen } from './screens/ColoringScreen'
-import { ErrorBoundary } from './ui/ErrorBoundary'
+import { useAppStore } from './store/useAppStore';
+import { HomeScreen } from './screens/HomeScreen';
+import { ProcessingScreen } from './screens/ProcessingScreen';
+import { ColoringScreen } from './screens/ColoringScreen';
+import { ErrorBoundary } from './ui/ErrorBoundary';
 
 export default function App() {
-  const screen = useAppStore((s) => s.screen)
-  const lang = useAppStore((s) => s.lang)
+  const screen = useAppStore((s) => s.screen);
+  const lang = useAppStore((s) => s.lang);
 
   return (
     <div className="flex h-full flex-col bg-paper-warm text-ink">
@@ -18,5 +18,5 @@ export default function App() {
         </ErrorBoundary>
       </main>
     </div>
-  )
+  );
 }
