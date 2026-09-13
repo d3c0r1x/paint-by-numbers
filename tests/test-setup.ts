@@ -44,3 +44,31 @@ if (typeof globalThis.crypto === 'undefined') {
     cryptoAny.randomUUID = () => '00000000-0000-0000-0000-000000000000';
   }
 }
+
+// Canvas mock для тестов contour (jsdom не поддерживает canvas без canvas package).
+if (typeof HTMLCanvasElement !== 'undefined' && !HTMLCanvasElement.prototype.getContext) {
+  HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement) {
+    return {
+      fillRect: function () {},
+      clearRect: function () {},
+      save: function () {},
+      restore: function () {},
+      fillStyle: '#000000',
+      lineWidth: 2,
+      lineJoin: 'round' as CanvasLineJoin,
+      lineCap: 'round' as CanvasLineCap,
+      getImageData: function (
+        this: CanvasRenderingContext2D,
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+      ) {
+        const pixels = new Uint8ClampedArray(w * h * 4);
+        for (let i = 0; i < pixels.length; i++) pixels[i] = 255;
+        return { data: pixels, width: w, height: h } as ImageData;
+      },
+      putImageData: function () {},
+    } as unknown as CanvasRenderingContext2D;
+  };
+}
