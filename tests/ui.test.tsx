@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ColorCircle } from '../src/ui/ColorCircle';
 import { Button, IconButton } from '../src/ui/Button';
+import { createRef } from 'react';
 
 describe('ColorCircle', () => {
   it('показывает символ цвета для цветного кружка', () => {
@@ -94,5 +95,111 @@ describe('IconButton', () => {
       </IconButton>,
     );
     expect(screen.getByRole('button', { name: 'Сохранить' })).toBeDisabled();
+  });
+
+  it('поддерживает ref forwarding', () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(
+      <IconButton label="Test" onClick={() => {}} ref={ref}>
+        <span>icon</span>
+      </IconButton>,
+    );
+    expect(ref.current).toBeInstanceOf(HTMLButtonElement);
+    expect(ref.current?.tagName).toBe('BUTTON');
+  });
+
+  it('вызывает onClick по Enter', () => {
+    const onClick = vi.fn();
+    render(
+      <IconButton label="Test" onClick={onClick}>
+        <span>icon</span>
+      </IconButton>,
+    );
+    const btn = screen.getByRole('button', { name: 'Test' });
+    fireEvent.keyDown(btn, { key: 'Enter' });
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('вызывает onClick по Space', () => {
+    const onClick = vi.fn();
+    render(
+      <IconButton label="Test" onClick={onClick}>
+        <span>icon</span>
+      </IconButton>,
+    );
+    const btn = screen.getByRole('button', { name: 'Test' });
+    fireEvent.keyDown(btn, { key: ' ' });
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Button accessibility', () => {
+  it('имеет focus-visible ring класс', () => {
+    render(
+      <Button variant="primary" onClick={() => {}}>
+        Click me
+      </Button>,
+    );
+    const btn = screen.getByRole('button', { name: 'Click me' });
+    expect(btn.className).toContain('focus-visible:outline-none');
+    expect(btn.className).toContain('focus-visible:ring-2');
+  });
+
+  it('поддерживает ref forwarding', () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(
+      <Button variant="primary" onClick={() => {}} ref={ref}>
+        Click me
+      </Button>,
+    );
+    expect(ref.current).toBeInstanceOf(HTMLButtonElement);
+  });
+
+  it('вызывает onClick по Enter', () => {
+    const onClick = vi.fn();
+    render(
+      <Button variant="primary" onClick={onClick}>
+        Click me
+      </Button>,
+    );
+    const btn = screen.getByRole('button', { name: 'Click me' });
+    fireEvent.keyDown(btn, { key: 'Enter' });
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('вызывает onClick по Space', () => {
+    const onClick = vi.fn();
+    render(
+      <Button variant="primary" onClick={onClick}>
+        Click me
+      </Button>,
+    );
+    const btn = screen.getByRole('button', { name: 'Click me' });
+    fireEvent.keyDown(btn, { key: ' ' });
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('имеет type=button по умолчанию', () => {
+    render(
+      <Button variant="primary" onClick={() => {}}>
+        Click me
+      </Button>,
+      { wrapper: ({ children }) => <form onSubmit={() => {}}>{children}</form> },
+    );
+    const btn = screen.getByRole('button', { name: 'Click me' });
+    expect(btn.type).toBe('button');
+  });
+});
+
+describe('IconButton accessibility', () => {
+  it('имеет focus-visible ring класс', () => {
+    render(
+      <IconButton label="Test" onClick={() => {}}>
+        <span>icon</span>
+      </IconButton>,
+    );
+    const btn = screen.getByRole('button', { name: 'Test' });
+    expect(btn.className).toContain('focus-visible:outline-none');
+    expect(btn.className).toContain('focus-visible:ring-2');
   });
 });
