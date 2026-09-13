@@ -127,11 +127,11 @@ export function ColoringScreen() {
   // against redundant redraws, so the loose dependency is fine).
   useEffect(() => {
     layers.setHighlight(activeCustom ? null : activeIndex)
-  })
+  }, [activeIndex, activeCustom, layers])
 
   useEffect(() => {
     layers.setFillPreview(fillPreview)
-  }, [layers, fillPreview])
+  }, [fillPreview])
 
   const save = useCallback(async (): Promise<void> => {
     if (!result || !sourceImage) return
