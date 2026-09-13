@@ -107,16 +107,23 @@ export function canvasToBlob(
   });
 }
 
-/** Trigger a browser download via <a download>. */
+/** Trigger a browser download via <a download>.
+ * The object URL is revoked after the click to free memory.
+ * @param blob  - Blob to download
+ * @param filename - Suggested file name (without path)
+ * @returns void
+ */
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
+  a.style.display = 'none';
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  // Revoke after a short delay to allow the download to start.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export async function shareBlob(
