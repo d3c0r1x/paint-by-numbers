@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
+import { A11yProvider } from './a11y/A11yContext';
 
 // Suppress the long-press context menu (SPEC Task 11, app container rules).
 document.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -25,6 +26,8 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <A11yProvider>
+      <App />
+    </A11yProvider>
   </StrictMode>,
 );
