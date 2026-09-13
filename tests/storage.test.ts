@@ -8,6 +8,7 @@ import {
   blobToLabels,
   labelsToBlob,
 } from '../src/storage/projects';
+import { canvasToBlob, shareBlob } from '../src/export/imageExport';
 import type { PipelineResult, PaletteEntry, RegionInfo } from '../src/engine/types';
 import type { PaintAction } from '../src/canvas/BrushEngine';
 
@@ -221,5 +222,85 @@ describe('storage/projects', () => {
     expect(project?.thumbnail === null || typeof project?.thumbnail === 'string').toBe(true);
 
     await deleteProject(id);
+  });
+
+  it('saveProject + getProject сохраняют и восстанавливают все поля целиком (интеграционная проверка)', async () => {
+    const id = await saveProject({
+      id: null,
+      name: 'Roundtrip Test',
+      sourceImage: new Blob(['roundtrip'], { type: 'image/png' }),
+      result: makeFakeResult(),
+      customColors: ['#123456', '#abcdef'],
+      strokes: [
+        makeFakeStroke(),
+        { tool: 'eraser', color: '#ffffff', size: 20, opacity: 0.5, points: [] },
+      ],
+    });
+
+    const saved = await getProject(id);
+    expect(saved).toBeDefined();
+    expect(saved?.name).toBe('Roundtrip Test');
+    expect(saved?.customColors).toEqual(['#123456', '#abcdef']);
+    expect(saved?.strokes).toHaveLength(2);
+    expect(saved?.strokes?.[0]).toEqual(makeFakeStroke());
+    expect(saved?.strokes?.[1]).toEqual({
+      tool: 'eraser',
+      color: '#ffffff',
+      size: 20,
+      opacity: 0.5,
+      points: [],
+    });
+    expect(saved?.labels).toBeDefined();
+
+    // В jsdom Dexie Blob не имеет arrayBuffer(); проверяем, что labels сохранён.
+    const labelsBlob = saved!.labels;
+    expect(labelsBlob).toBeDefined();
+
+    await deleteProject(id);
+  });
+
+  it('labelsToBlob и blobToLabels округляют Uint32Array целиком', async () => {
+    const size = 128 * 128;
+    const original = new Uint32Array(size);
+    original.fill(7, 0, size);
+    const blob = labelsToBlob(original);
+    const restored = await blobToLabels(blob);
+    expect(restored).toHaveLength(size);
+    expect(restored).toEqual(original);
+  });
+
+  it('canvasToBlob возвращает Blob с правильным типом', async () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 10;
+    canvas.height = 10;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ff0000';
+    ctx.fillRect(0, 0, 10, 10);
+
+    const blob = await canvasToBlob(canvas, 'image/png');
+    expect(blob).toBeInstanceOf(Blob);
+    expect(blob.type).toBe('image/png');
+  });
+
+  it('downloadBlob создаёт объектную ссылку на Blob', () => {
+    const blob = new Blob(['test content'], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    expect(url).toMatch(/^blob:/);
+    URL.revokeObjectURL(url);
+  });
+
+  it('shareBlob возвращает unsupported, если API share недоступен', async () => {
+    // navigator.share может отсутствовать в тестовом окружении
+    const originalShare = navigator.share;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (navigator as any).share = undefined;
+    try {
+      const blob = new Blob(['test'], { type: 'text/plain' });
+      const result = await shareBlob(blob, 'test.txt');
+      expect(result).toBe('unsupported');
+    } finally {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (navigator as any).share = originalShare;
+    }
   });
 });

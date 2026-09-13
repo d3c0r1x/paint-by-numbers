@@ -57,11 +57,15 @@ export function makeId(): string {
 }
 
 export function labelsToBlob(labels: Uint32Array): Blob {
-  return new Blob([labels.buffer as ArrayBuffer], { type: 'application/octet-stream' });
+  // TypeScript strict: Uint32Array.buffer может быть SharedArrayBuffer, но BlobPart
+  // ожидает ArrayBuffer. slice(0) создаёт новый ArrayBuffer, совместимый с BlobPart.
+  const buffer = labels.buffer.slice(0) as ArrayBuffer;
+  return new Blob([buffer], { type: 'application/octet-stream' });
 }
 
 export async function blobToLabels(blob: Blob): Promise<Uint32Array> {
-  return new Uint32Array(await blob.arrayBuffer());
+  const buffer = await blob.arrayBuffer();
+  return new Uint32Array(buffer);
 }
 
 export interface ProjectPaletteEntry {
