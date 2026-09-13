@@ -51,6 +51,21 @@ const SCENES: Scene[] = [
     colors: ['#f4eee7', '#d76f83', '#e18b9b', '#c85e78', '#557057', '#f4c9d2', '#b98163'],
     svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480"><rect width="720" height="480" fill="#f4eee7"/><path d="M330 450q15-160 0-265M450 450q-15-150 30-275" stroke="#557057" stroke-width="18" fill="none" stroke-linecap="round"/><circle cx="325" cy="145" r="84" fill="#d76f83"/><circle cx="220" cy="230" r="78" fill="#e18b9b"/><circle cx="475" cy="170" r="86" fill="#c85e78"/><circle cx="515" cy="280" r="72" fill="#e18b9b"/><g fill="#f4c9d2"><circle cx="325" cy="145" r="30"/><circle cx="220" cy="230" r="28"/><circle cx="475" cy="170" r="30"/><circle cx="515" cy="280" r="25"/></g><path d="M255 350h270l-35 100H290z" fill="#b98163"/></svg>',
   },
+  {
+    id: 'mountain-sunset', title: 'Горный закат', titleEn: 'Mountain Sunset', category: 'Природа', categoryEn: 'Nature', difficulty: 'Средне', minutes: 38, tags: ['горы', 'закат', 'пейзаж'],
+    colors: ['#1a1a2e', '#533483', '#e94560', '#f5a623', '#f4d35e'],
+    svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480"><defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1a2e"/><stop offset=".45" stop-color="#533483"/><stop offset=".75" stop-color="#e94560"/><stop offset="1" stop-color="#f5a623"/></linearGradient></defs><rect width="720" height="480" fill="url(#sky)"/><path d="M0 320 90 240 160 300 240 200 340 280 420 180 520 250 620 210 720 290V480H0Z" fill="#1a1a2e" opacity=".85"/><path d="M0 360 80 300 150 350 240 280 340 340 440 290 540 330 640 300 720 340V480H0Z" fill="#533483" opacity=".65"/><circle cx="575" cy="120" r="52" fill="#f5a623"/><circle cx="575" cy="120" r="36" fill="#f4d35e"/></svg>',
+  },
+  {
+    id: 'forest-clearing', title: 'Лесная поляна', titleEn: 'Forest Clearing', category: 'Природа', categoryEn: 'Nature', difficulty: 'Легко', minutes: 26, tags: ['лес', 'зелень', 'свет'],
+    colors: ['#2d5a3d', '#4a7c59', '#7ba05b', '#c5e0a6', '#f5f5f0', '#8b6b4a'],
+    svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480"><rect width="720" height="480" fill="#2d5a3d"/><path d="M0 380q90-50 180-20s150 40 240-10 180-30 210-10" fill="#4a7c59"/><ellipse cx="360" cy="340" rx="200" ry="60" fill="#7ba05b"/><ellipse cx="360" cy="335" rx="160" ry="40" fill="#c5e0a6"/><ellipse cx="360" cy="330" rx="100" ry="20" fill="#f5f5f0"/><circle cx="180" cy="200" r="80" fill="#4a7c59"/><circle cx="180" cy="200" r="40" fill="#7ba05b"/><path d="M160 200h40v60H160z" fill="#8b6b4a"/><circle cx="540" cy="160" r="65" fill="#4a7c59"/><circle cx="540" cy="160" r="32" fill="#7ba05b"/><path d="M520 160h40v50h-40z" fill="#8b6b4a"/><circle cx="360" cy="130" r="55" fill="#4a7c59"/><circle cx="360" cy="130" r="26" fill="#7ba05b"/><path d="M340 130h40v45h-40z" fill="#8b6b4a"/></svg>',
+  },
+  {
+    id: 'kimono', title: 'Японская вешалка', titleEn: 'Kimono Rack', category: 'Культура', categoryEn: 'Culture', difficulty: 'Сложно', minutes: 50, tags: ['япония', 'текстиль', 'укладка'],
+    colors: ['#1a1a1a', '#c45a5a', '#f4d35e', '#2d5a3d', '#e8b84b', '#5b7fd4', '#f5f0e8', '#8b4513'],
+    svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480"><rect width="720" height="480" fill="#f5f0e8"/><rect x="280" y="40" width="8" height="400" fill="#8b4513"/><rect x="432" y="40" width="8" height="400" fill="#8b4513"/><rect x="280" y="40" width="160" height="8" fill="#8b4513"/><rect x="280" y="432" width="160" height="8" fill="#8b4513"/><path d="M300 60L460 60 450 200 310 200Z" fill="#c45a5a"/><path d="M300 60 460 60 450 100 310 100Z" fill="#f4d35e"/><path d="M310 200 450 200 450 380 310 380Z" fill="#2d5a3d"/><path d="M310 200 450 200 445 280 315 280Z" fill="#c45a5a"/><path d="M300 60h20l15 140h-50z" fill="#e8b84b"/><path d="M440 60h-20l-15 140h50z" fill="#5b7fd4"/><path d="M360 80v160" stroke="#1a1a1a" stroke-width="3" fill="none"/></svg>',
+  },
 ]
 
 function toDataUrl(svg: string): string {
