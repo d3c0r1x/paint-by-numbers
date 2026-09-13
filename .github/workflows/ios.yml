@@ -1,0 +1,61 @@
+name: iOS
+
+on:
+  push:
+    branches: [main]
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  pull_request:
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  workflow_dispatch:
+
+jobs:
+  engine-tests:
+    name: PaintEngine tests (macOS)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift version
+        run: swift --version
+      - name: Run PaintEngine XCTest suite
+        working-directory: ios/PaintEngine
+        run: swift test
+
+  app-build:
+    name: Build app + unsigned IPA
+    runs-on: macos-15
+    needs: engine-tests
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+      - name: Show available destinations
+        working-directory: ios
+        run: xcrun simctl list devices available | head -30
+      - name: Build (iOS Simulator, code signing off)
+        working-directory: ios
+        run: |
+          xcodebuild -project PaintByNumbers.xcodeproj \
+            -scheme PaintByNumbers \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" \
+            build
+      - name: Build unsigned device archive → IPA artifact
+        working-directory: ios
+        run: |
+          xcodebuild -project PaintByNumbers.xcodeproj \
+            -scheme PaintByNumbers \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" \
+            -derivedDataPath build
+          mkdir -p Payload
+          cp -r build/Build/Products/Release-iphoneos/PaintByNumbers.app Payload/
+          zip -r PaintByNumbers-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PaintByNumbers-unsigned-ipa
+          path: ios/PaintByNumbers-unsigned.ipa
