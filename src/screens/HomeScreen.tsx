@@ -38,9 +38,25 @@ export function HomeScreen() {
       .catch(() => setProjects([]));
   }, []);
 
+  const [firstVisitDismissed, setFirstVisitDismissed] = useState<boolean | null>(null);
+  const dismissedKey = 'pbn.startHint.dismissed';
+
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    try {
+      setFirstVisitDismissed(localStorage.getItem(dismissedKey) === '1');
+    } catch {
+      // ignore private-mode / restricted-storage failures
+    }
+  }, []);
+
+  async function dismissFirstVisit() {
+    setFirstVisitDismissed(true);
+    try {
+      localStorage.setItem(dismissedKey, '1');
+    } catch {
+      // ignore persistence failures
+    }
+  }
 
   function handleFile(file: File | undefined) {
     setError(null);
@@ -160,6 +176,16 @@ export function HomeScreen() {
         {fileName && !error && <p className="mt-2 truncate text-xs text-ink-faint">{fileName}</p>}
         {error && <p className="mt-2 text-sm text-accent">{error}</p>}
       </section>
+
+      {!firstVisitDismissed && projects.length === 0 && (
+        <div className="rounded-3xl border border-accent/20 bg-accent/5 p-4 text-center shadow-sm">
+          <h3 className="mb-1.5 text-sm font-semibold text-ink">{t('home.startHint.title')}</h3>
+          <p className="text-sm text-ink-soft">{t('home.startHint.body')}</p>
+          <Button variant="secondary" onClick={dismissFirstVisit} className="mt-3">
+            {t('home.startHint.dismiss')}
+          </Button>
+        </div>
+      )}
 
       {/* My projects */}
       <section className="rounded-3xl border border-paper-deep bg-paper p-5 shadow-sm">
