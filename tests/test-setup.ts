@@ -5,8 +5,8 @@ import { afterEach, type Mock } from 'vitest';
 // Авто-очистка после каждого теста (React 18+ StrictMode дублирует монтирование).
 afterEach(() => cleanup());
 
-// Мокаем pointer events для тестов кисти (чтобы не падать на getCoalescedEvents).
-globalThis.PointerEvent = class MockPointerEvent {
+// Мокаем pointer events для тестов кисти.
+class MockPointerEvent {
   constructor(
     public clientX = 0,
     public clientY = 0,
@@ -17,7 +17,8 @@ globalThis.PointerEvent = class MockPointerEvent {
   }
   setPointerCapture() {}
   releasePointerCapture() {}
-} as unknown as typeof PointerEvent;
+}
+globalThis.PointerEvent = MockPointerEvent as unknown as typeof PointerEvent;
 
 import { indexedDB, IDBKeyRange } from 'fake-indexeddb';
 
