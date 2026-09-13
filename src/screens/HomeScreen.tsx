@@ -159,18 +159,23 @@ export function HomeScreen() {
         />
         <button
           onClick={() => inputRef.current?.click()}
-          className="group relative mx-auto mt-2 mb-4 flex h-44 w-44 items-center justify-center rounded-full text-center transition-transform active:scale-[1.02]"
+          type="button"
+          className="group relative mx-auto mt-2 mb-4 flex h-44 w-44 items-center justify-center rounded-full text-center transition-transform active:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30"
           style={{
             background: 'radial-gradient(circle at 30% 25%, #f3d9a8 0%, #e8b84b 55%, #c99030 100%)',
             boxShadow:
               'inset 0 -16px 32px rgb(120 78 20 / 0.3), inset 0 16px 32px rgb(255 255 255 / 0.5), 0 22px 40px -18px rgb(180 130 40 / 0.7)',
           }}
+          aria-label={t('home.pickImage')}
         >
           <span className="px-6 text-[17px] font-bold leading-tight whitespace-pre-line text-[#4a3208]">
             {t('home.pickImage')}
           </span>
           {/* Rotating dashed ring */}
-          <span className="pbn-orb-ring absolute -inset-3.5 rounded-full border-2 border-dashed border-[#c99030]/40" />
+          <span
+            className="pbn-orb-ring absolute -inset-3.5 rounded-full border-2 border-dashed border-[#c99030]/40"
+            aria-hidden="true"
+          />
         </button>
         <p className="-mt-1 text-xs text-ink-faint">{t('home.pickHint')}</p>
         {fileName && !error && <p className="mt-2 truncate text-xs text-ink-faint">{fileName}</p>}
@@ -227,9 +232,10 @@ export function HomeScreen() {
                 </Button>
                 <button
                   onClick={() => void removeProject(project.id)}
+                  type="button"
                   aria-label={t('common.delete')}
                   title={t('common.delete')}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-ink-faint active:bg-accent/10 active:text-accent"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-ink-faint active:bg-accent/10 active:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30"
                 >
                   <IconTrash size={18} />
                 </button>
@@ -255,7 +261,8 @@ export function HomeScreen() {
             <button
               key={artwork.id}
               onClick={() => void openCatalogArtwork(artwork)}
-              className="group overflow-hidden rounded-2xl border border-paper-deep bg-paper-warm/60 text-left transition-transform active:scale-[0.98]"
+              type="button"
+              className="group overflow-hidden rounded-2xl border border-paper-deep bg-paper-warm/60 text-left transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30"
               aria-label={`${t('common.open')}: ${catalogName(artwork)}`}
             >
               <img
@@ -280,11 +287,13 @@ export function HomeScreen() {
         onClick={() =>
           document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
-        className="relative mt-auto flex aspect-[16/7] flex-col justify-end overflow-hidden rounded-3xl p-4 text-left transition-transform active:scale-[0.99]"
+        type="button"
+        className="relative mt-auto flex aspect-[16/7] flex-col justify-end overflow-hidden rounded-3xl p-4 text-left transition-transform active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
         style={{
           background:
             'linear-gradient(180deg, rgba(28,25,23,.35), rgba(28,25,23,.75)), linear-gradient(160deg, #7b8ba5 0%, #4a5872 60%, #333f55 100%)',
         }}
+        aria-label={t('home.catalog')}
       >
         <span className="absolute top-3 right-3 rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
           {t('home.catalog')}
