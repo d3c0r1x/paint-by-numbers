@@ -12,7 +12,7 @@ const STEP_KEYS: Record<PipelineStep, string> = {
   palette: 'processing.step.palette',
   regions: 'processing.step.regions',
   merge: 'processing.step.merge',
-  contours: 'processing.step.merge',
+  contours: 'processing.step.contours',
   numbers: 'processing.step.numbers',
 }
 
