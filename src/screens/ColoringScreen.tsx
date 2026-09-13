@@ -217,12 +217,25 @@ export function ColoringScreen() {
     return () => ro.disconnect();
   }, [result]);
 
+  // Restore project when navigating back to coloring screen.
+  useEffect(() => {
+    if (!restored) return;
+    setCustomColors(restored.customColors);
+    strokesRef.current = restored.strokes;
+    redoRef.current = [];
+    setUndoCount(restored.strokes.length);
+    setRedoCount(0);
+    layers.repaintPaint(restored.strokes);
+    setRestoredProject(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restored]);
+
   // Global keyboard shortcuts (dev-only bindings for test ergonomics).
   useEffect(() => {
     if (!DEV_TOOLS) return;
     const cleanup = bindKeyboard(window);
     return cleanup;
-  }, [DEV_TOOLS, bindKeyboard]);
+  }, [bindKeyboard]);
 
   const applyView = useCallback(() => {
     const container = containerRef.current;
@@ -237,7 +250,7 @@ export function ColoringScreen() {
 
   useEffect(() => {
     layers.setFillPreview(fillPreview);
-  }, [fillPreview]);
+  }, [fillPreview, layers]);
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     if (!result) return;

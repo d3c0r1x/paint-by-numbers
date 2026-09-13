@@ -164,6 +164,7 @@ export function useCanvasLayers(result: PipelineResult | null): CanvasLayers {
     // Re-apply overlay state wiped by the canvas resize above.
     drawHighlight();
     drawPreview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result]);
 
   function repaintPaint(actions: PaintAction[]): void {
