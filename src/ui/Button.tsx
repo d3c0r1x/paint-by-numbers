@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, ButtonHTMLAttributes, Ref } from 'react';
+import { forwardRef } from 'react';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -9,31 +10,45 @@ const VARIANTS: Record<Variant, string> = {
   danger: 'bg-accent/10 text-accent active:bg-accent/20',
 };
 
-interface ButtonProps {
+interface BaseButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
-  onClick?: () => void;
-  disabled?: boolean;
-  className?: string;
   children: ReactNode;
 }
 
-export function Button({
-  variant = 'primary',
-  onClick,
-  disabled,
-  className = '',
-  children,
-}: ButtonProps) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-[opacity,background-color] disabled:opacity-40 ${VARIANTS[variant]} ${className}`}
-    >
-      {children}
-    </button>
-  );
+const baseClass =
+  'inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-[opacity,background-color] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30 disabled:cursor-not-allowed';
+
+interface ButtonProps extends BaseButtonProps {
+  variant?: Variant;
+  className?: string;
 }
+
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    { variant = 'primary', onClick, disabled, className = '', children, type = 'button', ...rest },
+    ref,
+  ) => {
+    return (
+      <button
+        ref={ref}
+        type={type}
+        onClick={onClick}
+        disabled={disabled}
+        className={`${baseClass} ${VARIANTS[variant]} px-4 py-2.5 ${className}`}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick?.();
+          }
+        }}
+        {...rest}
+      >
+        {children}
+      </button>
+    );
+  },
+);
+Button.displayName = 'Button';
 
 interface IconButtonProps {
   label: string;
@@ -42,28 +57,37 @@ interface IconButtonProps {
   active?: boolean;
   className?: string;
   children: ReactNode;
+  /** Forwarded ref for focus management in parent components. */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 /** Square toolbar button for top bars and floating stacks. */
-export function IconButton({
-  label,
-  onClick,
-  disabled,
-  active,
-  className = '',
-  children,
-}: IconButtonProps) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={label}
-      aria-label={label}
-      className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors disabled:opacity-30 ${
-        active ? 'bg-ink text-paper' : 'text-ink-soft active:bg-paper-deep'
-      } ${className}`}
-    >
-      {children}
-    </button>
-  );
-}
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
+  ({ label, onClick, disabled, active, className = '', children, type = 'button', ref }, ref2) => {
+    return (
+      <button
+        ref={ref ?? ref2}
+        type={type}
+        onClick={onClick}
+        disabled={disabled}
+        title={label}
+        aria-label={label}
+        className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30 ${
+          active ? 'bg-ink text-paper' : 'text-ink-soft active:bg-paper-deep'
+        } ${className}`}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick?.();
+          }
+        }}
+        {...rest}
+      >
+        {children}
+      </button>
+    );
+  },
+);
+IconButton.displayName = 'IconButton';
+
+const rest: Record<string, never> = {};
