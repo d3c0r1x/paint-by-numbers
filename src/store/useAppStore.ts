@@ -15,6 +15,7 @@ interface AppState {
   darkMode: boolean;
   toggleDarkMode: () => void;
 
+  /** Hex-код текущего 프로젝트의 картинки (для thumbnail в списке проектов). */
   sourceImage: Blob | null;
   sourceName: string;
   setSource: (image: Blob | null, name?: string) => void;
@@ -39,8 +40,26 @@ export const useAppStore = create<AppState>((set) => ({
   lang: detectLang(),
   setLang: (lang) => set({ lang }),
 
-  darkMode: false,
-  toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),
+  darkMode: (() => {
+    try {
+      const saved = localStorage.getItem('pbn.darkMode');
+      if (saved === 'true') return true;
+      if (saved === 'false') return false;
+    } catch {
+      // localStorage не доступен (приватный режим) — оставляем false
+    }
+    return false;
+  })(),
+  toggleDarkMode: () =>
+    set((s) => {
+      const next = !s.darkMode;
+      try {
+        localStorage.setItem('pbn.darkMode', String(next));
+      } catch {
+        // игнорируем ошибки записи (приватный режим)
+      }
+      return { darkMode: next };
+    }),
 
   sourceImage: null,
   sourceName: '',
