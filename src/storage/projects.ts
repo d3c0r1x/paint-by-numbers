@@ -31,7 +31,7 @@ class PaintByNumbersDb extends Dexie {
   constructor() {
     super('paint-by-numbers');
     this.version(1).stores({
-      projects: 'id, updatedAt',
+      projects: 'id, updatedAt, createdAt',
     });
   }
 }
@@ -103,12 +103,14 @@ export async function saveProject(input: SaveInput): Promise<string> {
 
 export async function listProjects(): Promise<Array<Project & { thumbnail: string | null }>> {
   const projects = await db.projects.orderBy('updatedAt').reverse().toArray();
-  return Promise.all(
-    projects.map(async (project) => ({
-      ...project,
-      thumbnail: await makeThumbnail(project.sourceImage),
-    })),
+  // Generate thumbnails in parallel for faster home screen loading.
+  const thumbnails = await Promise.allSettled(
+    projects.map((project) => makeThumbnail(project.sourceImage)),
   );
+  return projects.map((project, i) => ({
+    ...project,
+    thumbnail: thumbnails[i].status === 'fulfilled' ? thumbnails[i].value : null,
+  }));
 }
 
 export async function getProject(id: string): Promise<Project | undefined> {
