@@ -138,7 +138,8 @@ export function useCanvasLayers(result: PipelineResult | null): CanvasLayers {
 
     const bg = bgRef.current?.getContext('2d');
     if (bg) {
-      bg.fillStyle = '#ffffff';
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      bg.fillStyle = isDark ? '#292524' : '#ffffff';
       bg.fillRect(0, 0, width, height);
     }
 
