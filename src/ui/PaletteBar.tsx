@@ -66,20 +66,22 @@ export function PaletteBar({
         ))}
       </div>
 
-      <input
-        ref={colorInputRef}
-        type="color"
-        className="absolute h-0 w-0 opacity-0"
-        onChange={(e) => onAddCustom(e.target.value)}
-      />
-      <button
-        onClick={() => colorInputRef.current?.click()}
+      <label
+        htmlFor="custom-color-picker"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-ink-faint text-ink-soft transition-colors active:border-ink active:text-ink"
         aria-label="custom color"
         title="custom color"
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-ink-faint text-ink-soft transition-colors active:border-ink active:text-ink"
       >
         <IconPlus size={18} />
-      </button>
+      </label>
+      <input
+        id="custom-color-picker"
+        ref={colorInputRef}
+        type="color"
+        className="sr-only"
+        onChange={(e) => onAddCustom(e.target.value)}
+        aria-label="pick custom color"
+      />
     </div>
   );
 }
