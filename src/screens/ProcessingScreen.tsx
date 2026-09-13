@@ -95,7 +95,12 @@ export function ProcessingScreen() {
       <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
         <p className="text-accent">{t('processing.error')}</p>
         {errorMessage && <p className="max-w-sm text-xs text-ink-faint">{errorMessage}</p>}
-        <button onClick={reset} className="rounded-xl bg-ink px-4 py-2 font-semibold text-paper">
+        <button
+          onClick={reset}
+          type="button"
+          className="rounded-xl bg-ink px-4 py-2 font-semibold text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30"
+          aria-label={t('processing.back')}
+        >
           {t('processing.back')}
         </button>
       </div>
