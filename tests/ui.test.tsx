@@ -210,7 +210,7 @@ describe('AccessibilitySettings', () => {
   it('переключает high-contrast класс на document.documentElement', () => {
     const originalItem = localStorage.getItem('pbn.a11y');
     try {
-      const { rerender } = render(
+      render(
         <A11yProvider>
           <AccessibilitySettings onClose={() => {}} />
         </A11yProvider>,
@@ -234,7 +234,7 @@ describe('AccessibilitySettings', () => {
   it('устанавливает CSS-переменную --font-scale при выборе размера шрифта', () => {
     const originalItem = localStorage.getItem('pbn.a11y');
     try {
-      const { rerender } = render(
+      render(
         <A11yProvider>
           <AccessibilitySettings onClose={() => {}} />
         </A11yProvider>,
