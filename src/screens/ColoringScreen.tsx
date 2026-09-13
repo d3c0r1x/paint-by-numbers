@@ -498,7 +498,11 @@ export function ColoringScreen() {
 
       {/* Settings sheet (Task 16) */}
       {settingsOpen && (
-        <Sheet title={t('coloring.settingsTitle')} onClose={() => setSettingsOpen(false)}>
+        <Sheet
+          title={t('coloring.settingsTitle')}
+          onClose={() => setSettingsOpen(false)}
+          activeToolNote={t('coloring.shortcuts.eraser')}
+        >
           <div className="mb-4 grid grid-cols-2 gap-2">
             {(['brush', 'eraser'] as const).map((tl) => (
               <button
@@ -544,7 +548,11 @@ export function ColoringScreen() {
 
       {/* Export sheet (Task 17) */}
       {exportOpen && (
-        <Sheet title={t('coloring.export')} onClose={() => setExportOpen(false)}>
+        <Sheet
+          title={t('coloring.export')}
+          onClose={() => setExportOpen(false)}
+          activeToolNote={t('coloring.shortcuts.body')}
+        >
           <label className="mb-3 flex items-center gap-2.5 text-sm font-medium">
             <input
               type="checkbox"
@@ -617,7 +625,11 @@ export function ColoringScreen() {
 
       {/* "Finish for me" confirmation */}
       {finishOpen && (
-        <Sheet title={t('coloring.finishTitle')} onClose={() => setFinishOpen(false)}>
+        <Sheet
+          title={t('coloring.finishTitle')}
+          onClose={() => setFinishOpen(false)}
+          activeToolNote={t('coloring.shortcuts.body')}
+        >
           <p className="mb-4 text-sm leading-relaxed text-ink-soft">{t('coloring.finishText')}</p>
           <div className="grid grid-cols-2 gap-2">
             <Button variant="secondary" onClick={() => setFinishOpen(false)}>
@@ -638,10 +650,12 @@ function Sheet({
   title,
   onClose,
   children,
+  activeToolNote,
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  activeToolNote?: string;
 }) {
   return (
     <div
@@ -654,6 +668,11 @@ function Sheet({
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-bold">{title}</h2>
+          {activeToolNote && (
+            <span className="rounded-full bg-accent/10 px-2.5 py-1 text-[11px] font-semibold text-accent">
+              {activeToolNote}
+            </span>
+          )}
           <button
             onClick={onClose}
             aria-label="close"
