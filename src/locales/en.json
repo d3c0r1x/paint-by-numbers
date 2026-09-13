@@ -16,6 +16,7 @@
   "coloring.shortcuts.zoom": "Pinch or use zoom buttons",
   "coloring.shortcuts.pan": "Drag outside canvas",
   "coloring.shortcuts.close": "Tap Home to go back",
+  "coloring.shortcuts.kbd": "{key} key (dev)",
   "home.noProjects": "No saved projects yet",
   "home.error.notImage": "Only image files can be loaded",
   "home.error.readFailed": "Failed to read the file",

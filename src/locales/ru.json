@@ -16,6 +16,7 @@
   "coloring.shortcuts.zoom": "Стерео или кнопки зума",
   "coloring.shortcuts.pan": "Перетаскивание вне холста",
   "coloring.shortcuts.close": "Нажмите Домой для возврата",
+  "coloring.shortcuts.kbd": "клавиша {key} (dev)",
   "home.noProjects": "Пока нет сохранённых проектов",
   "home.error.notImage": "Можно загружать только изображения",
   "home.error.readFailed": "Не удалось прочитать файл",

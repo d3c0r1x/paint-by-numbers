@@ -100,52 +100,6 @@ export function ColoringScreen() {
 
   const palette = result?.palette ?? [];
 
-  // Restore from a saved project once (strokes repaint, contours already drawn from labels).
-  useEffect(() => {
-    if (!restored) return;
-    setCustomColors(restored.customColors);
-    strokesRef.current = restored.strokes;
-    redoRef.current = [];
-    setUndoCount(restored.strokes.length);
-    setRedoCount(0);
-    layers.repaintPaint(restored.strokes);
-    setRestoredProject(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restored]);
-
-  // Initial view fit.
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container || !result) return;
-    viewRef.current.fitTo(
-      container.clientWidth,
-      container.clientHeight,
-      result.width,
-      result.height,
-    );
-    viewRef.current.apply(container.firstElementChild as HTMLElement);
-    const ro = new ResizeObserver(() => {
-      viewRef.current.apply(container.firstElementChild as HTMLElement);
-    });
-    ro.observe(container);
-    return () => ro.disconnect();
-  }, [result]);
-
-  const applyView = useCallback(() => {
-    const container = containerRef.current;
-    if (container) viewRef.current.apply(container.firstElementChild as HTMLElement);
-  }, []);
-
-  // Highlight regions of the active palette color (setHighlight self-guards
-  // against redundant redraws, so the loose dependency is fine).
-  useEffect(() => {
-    layers.setHighlight(activeCustom ? null : activeIndex);
-  }, [activeIndex, activeCustom, layers]);
-
-  useEffect(() => {
-    layers.setFillPreview(fillPreview);
-  }, [fillPreview]);
-
   const save = useCallback(async (): Promise<void> => {
     if (!result || !sourceImage) return;
     const id = await saveProject({
@@ -170,6 +124,120 @@ export function ColoringScreen() {
       setRestoredProject(null);
     };
   }, [result, sourceImage, save, setRestoredProject]);
+
+  const undo = useCallback(() => {
+    const cur = strokesRef.current;
+    if (cur.length === 0) return;
+    const last = cur[cur.length - 1];
+    redoRef.current = [...redoRef.current, last];
+    strokesRef.current = cur.slice(0, -1);
+    setUndoCount(strokesRef.current.length);
+    setRedoCount(redoRef.current.length);
+    layers.repaintPaint(strokesRef.current);
+    dirtyRef.current = true;
+  }, [layers]);
+
+  const redo = useCallback(() => {
+    const last = redoRef.current[redoRef.current.length - 1];
+    if (!last) return;
+    redoRef.current = redoRef.current.slice(0, -1);
+    strokesRef.current = [...strokesRef.current, last].slice(-MAX_UNDO);
+    setUndoCount(strokesRef.current.length);
+    setRedoCount(redoRef.current.length);
+    layers.repaintPaint(strokesRef.current);
+    dirtyRef.current = true;
+  }, [layers]);
+  const bindKeyboard = useCallback(
+    (target: Window | HTMLElement) => {
+      const handler = (e: Event) => {
+        const ke = e as KeyboardEvent;
+        if (!result) return;
+        const k = ke.key.toLowerCase();
+        // Prevent common browser shortcuts on dev keyboard bindings.
+        if (k === 's') {
+          ke.preventDefault();
+          void save();
+          return;
+        }
+        if (k === 'b') {
+          setTool('brush');
+          return;
+        }
+        if (k === 'e' && ke.shiftKey) {
+          ke.preventDefault();
+          setTool('eraser');
+          return;
+        }
+        if (k === 'z' && !ke.metaKey && !ke.ctrlKey) {
+          ke.preventDefault();
+          undo();
+          return;
+        }
+        if (k === 'y' && !ke.metaKey && !ke.ctrlKey) {
+          ke.preventDefault();
+          redo();
+          return;
+        }
+        if (k === 'escape') {
+          if (settingsOpen) {
+            setSettingsOpen(false);
+            return;
+          }
+          if (exportOpen) {
+            setExportOpen(false);
+            return;
+          }
+          if (finishOpen) {
+            setFinishOpen(false);
+            return;
+          }
+        }
+      };
+      target.addEventListener('keydown', handler);
+      return () => target.removeEventListener('keydown', handler);
+    },
+    [result, save, undo, redo, settingsOpen, exportOpen, finishOpen],
+  );
+
+  // Initial view fit.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !result) return;
+    viewRef.current.fitTo(
+      container.clientWidth,
+      container.clientHeight,
+      result.width,
+      result.height,
+    );
+    viewRef.current.apply(container.firstElementChild as HTMLElement);
+    const ro = new ResizeObserver(() => {
+      viewRef.current.apply(container.firstElementChild as HTMLElement);
+    });
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [result]);
+
+  // Global keyboard shortcuts (dev-only bindings for test ergonomics).
+  useEffect(() => {
+    if (!DEV_TOOLS) return;
+    const cleanup = bindKeyboard(window);
+    return cleanup;
+  }, [DEV_TOOLS, bindKeyboard]);
+
+  const applyView = useCallback(() => {
+    const container = containerRef.current;
+    if (container) viewRef.current.apply(container.firstElementChild as HTMLElement);
+  }, []);
+
+  // Highlight regions of the active palette color (setHighlight self-guards
+  // against redundant redraws, so the loose dependency is fine).
+  useEffect(() => {
+    layers.setHighlight(activeCustom ? null : activeIndex);
+  }, [activeIndex, activeCustom, layers]);
+
+  useEffect(() => {
+    layers.setFillPreview(fillPreview);
+  }, [fillPreview]);
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     if (!result) return;
@@ -278,29 +346,6 @@ export function ColoringScreen() {
     if (panningRef.current && pointersRef.current.size === 0) panningRef.current = null;
   }
 
-  const undo = useCallback(() => {
-    const cur = strokesRef.current;
-    if (cur.length === 0) return;
-    const last = cur[cur.length - 1];
-    redoRef.current = [...redoRef.current, last];
-    strokesRef.current = cur.slice(0, -1);
-    setUndoCount(strokesRef.current.length);
-    setRedoCount(redoRef.current.length);
-    layers.repaintPaint(strokesRef.current);
-    dirtyRef.current = true;
-  }, [layers]);
-
-  const redo = useCallback(() => {
-    const last = redoRef.current[redoRef.current.length - 1];
-    if (!last) return;
-    redoRef.current = redoRef.current.slice(0, -1);
-    strokesRef.current = [...strokesRef.current, last].slice(-MAX_UNDO);
-    setUndoCount(strokesRef.current.length);
-    setRedoCount(redoRef.current.length);
-    layers.repaintPaint(strokesRef.current);
-    dirtyRef.current = true;
-  }, [layers]);
-
   /** "Finish for me": fill remaining areas, recorded as an undoable action. */
   const finishForMe = useCallback(() => {
     const fill: FillAllAction = { tool: 'fill-all' };
@@ -341,13 +386,18 @@ export function ColoringScreen() {
             <IconRedo />
           </IconButton>
           {DEV_TOOLS && (
-            <IconButton
-              label={t('coloring.devPreview')}
-              onClick={() => setFillPreview((v) => !v)}
-              active={fillPreview}
-            >
-              <IconEye />
-            </IconButton>
+            <>
+              <IconButton
+                label={t('coloring.devPreview')}
+                onClick={() => setFillPreview((v) => !v)}
+                active={fillPreview}
+              >
+                <IconEye />
+              </IconButton>
+              <span className="pbn-kbd text-[11px] font-semibold text-ink-faint">
+                {t('coloring.shortcuts.kbd', { key: 'Z' })}
+              </span>
+            </>
           )}
         </div>
         <div className="flex items-center gap-0.5">
