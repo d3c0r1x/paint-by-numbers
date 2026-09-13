@@ -1,0 +1,35 @@
+# UTF-8 для текстовых файлов, LF в репозитории
+* text=auto eol=lf
+
+# Явно двоичные файлы без текст-преобразований
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.svg binary
+*.cur binary
+*.bmp binary
+*.mp3 binary
+*.mp4 binary
+*.webm binary
+*.zip binary
+*.gz binary
+*.pdf binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+
+# node_modules не в репозитории, но если случайно попадёт — бинарный
+node_modules/** binary
+
+# SQLite — бинарный
+*.sqlite binary
+*.db binary
+
+# Windows-специфичные файлы — как текст, но без LF-принуждения
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
