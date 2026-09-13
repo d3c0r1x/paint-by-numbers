@@ -149,4 +149,77 @@ describe('storage/projects', () => {
     const project = await getProject(id);
     expect(project).toBeUndefined();
   });
+
+  it('сохранение с существующим id обновляет проект (createdAt остаётся, updatedAt меняется)', async () => {
+    const id = await saveProject({
+      id: null,
+      name: 'Original',
+      sourceImage: new Blob(['orig'], { type: 'image/png' }),
+      result: makeFakeResult(),
+      customColors: ['#111111'],
+      strokes: [],
+    });
+
+    const first = await getProject(id);
+    const createdAt = first?.createdAt;
+    const updatedAtBefore = first?.updatedAt;
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    // Обновляем имя и добавляем кастомный цвет, сохраняем с тем же id
+    await saveProject({
+      id,
+      name: 'Updated',
+      sourceImage: new Blob(['updated'], { type: 'image/png' }),
+      result: makeFakeResult(),
+      customColors: ['#111111', '#222222'],
+      strokes: [makeFakeStroke()],
+    });
+
+    const updated = await getProject(id);
+    expect(updated?.name).toBe('Updated');
+    expect(updated?.createdAt).toBe(createdAt);
+    expect(updated?.updatedAt).toBeGreaterThan(updatedAtBefore!);
+    expect(updated?.customColors).toContain('#222222');
+    expect(updated?.strokes).toHaveLength(1);
+
+    await deleteProject(id);
+  });
+
+  it('сохранение пустых strokes корректно (проект без мазков)', async () => {
+    const id = await saveProject({
+      id: null,
+      name: 'Empty Strokes',
+      sourceImage: new Blob(['empty'], { type: 'image/png' }),
+      result: makeFakeResult(),
+      customColors: [],
+      strokes: [],
+    });
+
+    const project = await getProject(id);
+    expect(project?.strokes).toHaveLength(0);
+    expect(project?.customColors).toHaveLength(0);
+
+    await deleteProject(id);
+  });
+
+  it('listProjects возвращает thumbnail для каждого проекта', async () => {
+    const id = await saveProject({
+      id: null,
+      name: 'Thumbnail Test',
+      sourceImage: new Blob(['thumb'], { type: 'image/png' }),
+      result: makeFakeResult(),
+      customColors: [],
+      strokes: [],
+    });
+
+    const list = await listProjects();
+    const project = list.find((p) => p.id === id);
+    expect(project).toBeDefined();
+    // В jsdom/thumbnails могут быть null (если createImageBitmap не поддерживается).
+    // Основное требование: thumbnail существует и не вызывает ошибок.
+    expect(project?.thumbnail === null || typeof project?.thumbnail === 'string').toBe(true);
+
+    await deleteProject(id);
+  });
 });
