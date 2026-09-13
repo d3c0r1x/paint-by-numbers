@@ -294,8 +294,13 @@ function makeResult(colors: string[], seed: number): PipelineResult {
   return { width, height, labels, palette, regions };
 }
 
+// Memoized catalog: SVG→data URL and synthetic labels are expensive to
+// recompute, so we build each artwork once and reuse the reference.
+let _catalog: CatalogArtwork[] | null = null;
+
 export function getCatalogArtworks(): CatalogArtwork[] {
-  return SCENES.map((scene, index) => {
+  if (_catalog) return _catalog;
+  _catalog = SCENES.map((scene, index) => {
     const result = makeResult(scene.colors, index);
     return {
       ...scene,
@@ -305,4 +310,10 @@ export function getCatalogArtworks(): CatalogArtwork[] {
       source: new Blob([scene.svg], { type: 'image/svg+xml' }),
     };
   });
+  return _catalog;
+}
+
+/** Invalidate the cached catalog (useful for testing only). */
+export function resetCatalogCache(): void {
+  _catalog = null;
 }
