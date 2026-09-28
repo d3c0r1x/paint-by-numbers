@@ -1,20 +1,18 @@
 # Paint by Numbers
 
-**Turn a photo into a paint-by-numbers coloring page and paint it directly in the browser.**
+> **Интересный личный проект, над которым я работал длительное время.** Проект начинался как идея «фото → картина по номерам», а затем вырос в browser-first приложение с реальной обработкой изображений, Web Worker, Canvas, IndexedDB и экспериментальным iPad-клиентом.
+>
+> **Status:** active portfolio project / browser MVP.
+>
+> [Live demo](https://d3c0r1x.github.io/paint-by-numbers/)
 
-[![Tests](https://github.com/d3c0r1x/paint-by-numbers/actions/workflows/test.yml/badge.svg)](https://github.com/d3c0r1x/paint-by-numbers/actions/workflows/test.yml) · [Live demo](https://d3c0r1x.github.io/paint-by-numbers/)
+## Что делает
 
-## What it does
+Пользователь загружает фотографию → приложение строит набор цветных областей с номерами → пользователь может раскрашивать результат прямо в браузере.
 
-- converts a user photo into numbered regions entirely on the client;
-- keeps heavy image processing inside a Web Worker so the UI stays responsive;
-- builds a per-image palette with automatic color quantization;
-- vectorizes region contours and places readable numbers;
-- provides brush, eraser, zoom, pan, fill and progress feedback;
-- saves projects locally with IndexedDB;
-- includes an experimental SwiftUI/PencilKit iPad client using the same core idea.
+Главное отличие: преобразование выполняется **на стороне клиента**, без обязательной отправки изображения на сервер.
 
-## Processing pipeline
+## Pipeline
 
 ```
 photo
@@ -27,52 +25,196 @@ k-means / palette selection
   ↓
 region merge
   ↓
-vectorization + contours
+vectorization
   ↓
-numbers + palette
+contours + number placement
   ↓
 Canvas painting
 ```
 
-## Engineering highlights
+## Возможности
 
-**Client-side processing.** The image does not need to be uploaded to a server for conversion.
+- загрузка изображения;
+- автоматическая генерация палитры;
+- сегментация;
+- объединение соседних областей;
+- отрисовка контуров;
+- номера внутри областей;
+- кисть;
+- ластик;
+- fill;
+- zoom;
+- pan;
+- прогресс обработки;
+- локальное сохранение проектов;
+- demo на GitHub Pages;
+- экспериментальный SwiftUI/PencilKit client.
 
-**Performance.** Heavy computation is isolated in a Web Worker and progress is reported back to the UI.
+## Структура
 
-**Colour difference.** The pipeline uses OKLab/CIEDE2000 for perceptual colour comparisons rather than relying only on raw RGB distance.
+```
+src/
+  ...                    # React application
+  image processing       # segmentation / palette / regions
+  worker                 # heavy processing outside UI thread
+  canvas                 # painting surface
+  state                  # Zustand
+  storage                # Dexie / IndexedDB
 
-**Portable core.** The project includes a SwiftUI/PencilKit pilot based on the same processing concepts.
+tests/
+  ...                    # Vitest tests
 
-## Stack
+docs/
+  SPEC.md                # подробная спецификация pipeline
+```
 
-React 19 · TypeScript 5.9 · Vite 7 · Tailwind · Zustand · Dexie/IndexedDB · Web Worker · Canvas 2D · Vitest · SwiftUI · PencilKit · GitHub Actions
+Точные имена модулей лучше смотреть в текущем каталоге `src/`; документация алгоритмов находится в [docs/SPEC.md](docs/SPEC.md).
 
-## Tests
+## Локальный запуск
+
+### Требования
+
+- Node.js;
+- npm.
+
+### Установка
+
+```bash
+npm install
+```
+
+### Development
+
+```bash
+npm run dev
+```
+
+Vite поднимет локальный dev server и выведет URL в консоль.
+
+### Production build
+
+```bash
+npm run build
+```
+
+### Preview build
+
+```bash
+npm run preview
+```
+
+### Tests
 
 ```bash
 npm test
 ```
 
-The web project currently contains **88 tests** covering colour calculations, quantization, SLIC, region merging, vectorization, number placement, storage and UI behaviour.
-
-## Limitations
-
-- large images become slower on the client;
-- the palette is intentionally limited so the result remains practical to paint;
-- the iOS part is a pilot, not an App Store release;
-- the generated palette represents RGB colours, not physical paint mixing.
-
-## Local run
+### Watch mode
 
 ```bash
-npm install
-npm run dev
-npm run build
+npm run test:watch
 ```
+
+### Lint
+
+```bash
+npm run lint
+```
+
+### Format
+
+```bash
+npm run format
+```
+
+## Пример использования
+
+1. Открыть приложение.
+2. Загрузить фотографию.
+3. Дождаться завершения обработки.
+4. Получить изображение с областями и номерами.
+5. Выбрать цвет.
+6. Закрашивать области кистью или fill.
+7. Использовать zoom/pan для мелких участков.
+8. Вернуться к проекту позже через локальное хранение.
+
+## Почему используется Web Worker
+
+SLIC, quantization и работа с большими пиксельными массивами могут блокировать main thread.
+
+Поэтому тяжёлые вычисления вынесены в worker:
+
+```
+UI thread
+   ↓ postMessage
+Worker
+   ↓ progress / result
+UI thread
+```
+
+Это делает интерфейс заметно устойчивее на больших изображениях.
+
+## Цветовое пространство
+
+Для perceptual comparison используются OKLab / CIEDE2000.
+
+Это позволяет сравнивать близость цветов не только как расстояние между RGB-тройками.
+
+## Local storage
+
+Dexie работает поверх IndexedDB.
+
+В результате пользовательские проекты можно хранить локально без отдельного backend.
+
+## Performance
+
+Слабое место проекта — большие изображения.
+
+Чем больше:
+
+- ширина;
+- высота;
+- количество superpixels;
+- количество цветовых регионов,
+
+тем дороже обработка.
+
+Ограниченная палитра нужна не только для скорости, но и для того, чтобы итог оставался практически раскрашиваемым.
+
+## iPad experiment
+
+В репозитории есть экспериментальная SwiftUI/PencilKit часть.
+
+Это **pilot**, а не опубликованное App Store приложение.
+
+Идея — перенести core-концепцию рисования и обработки в native touch workflow.
+
+## Тесты
+
+На текущем состоянии репозитория — **88 тестов** по направлениям:
+
+- colour math;
+- quantization;
+- SLIC;
+- region merge;
+- vectorization;
+- number placement;
+- storage;
+- UI behaviour.
+
+## Ограничения
+
+- большие фотографии обрабатываются дольше;
+- палитра намеренно ограничена;
+- RGB-палитра не моделирует реальное смешивание физической краски;
+- iPad часть экспериментальная.
 
 ## AI-assisted development
 
-AI was used for implementation drafts, routine UI work and test generation. I owned the product decomposition, algorithm choices, debugging, validation and final behaviour.
+AI использовался для черновой реализации, рутинного UI-кода и генерации тестовых идей.
 
-See [docs/SPEC.md](docs/SPEC.md) for the detailed processing specification.
+Архитектура pipeline, выбор алгоритмов, debugging, validation и финальное поведение — моя зона ответственности.
+
+## Лицензия
+
+MIT.
