@@ -1,5 +1,8 @@
 # Раскраска по номерам (Paint by Numbers)
 
+[![Tests](https://github.com/d3c0r1x/paint-by-numbers/actions/workflows/test.yml/badge.svg)](https://github.com/d3c0r1x/paint-by-numbers/actions/workflows/test.yml)
+[![GitHub Pages](https://img.shields.io/badge/demo-GitHub%20Pages-blue)](https://d3c0r1x.github.io/paint-by-numbers/)
+
 ## **[Живая демо-версия](https://d3c0r1x.github.io/paint-by-numbers/)**
 
 Приложение, которое превращает ваше фото в раскраску по номерам — и вы рисуете её кистью, как настоящую картину.
