@@ -1,60 +1,148 @@
-# Раскраска по номерам (Paint by Numbers)
+# Paint by Numbers — раскраска по номерам из фотографии, целиком в браузере
 
 [![Tests](https://github.com/d3c0r1x/paint-by-numbers/actions/workflows/test.yml/badge.svg)](https://github.com/d3c0r1x/paint-by-numbers/actions/workflows/test.yml)
-[![GitHub Pages](https://img.shields.io/badge/demo-GitHub%20Pages-blue)](https://d3c0r1x.github.io/paint-by-numbers/)
+[![Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://d3c0r1x.github.io/paint-by-numbers/)
+[![iOS](https://github.com/d3c0r1x/paint-by-numbers/actions/workflows/ios.yml/badge.svg)](https://github.com/d3c0r1x/paint-by-numbers/actions/workflows/ios.yml)
 
-## **[Живая демо-версия](https://d3c0r1x.github.io/paint-by-numbers/)**
+**[🎨 Живая демо-версия](https://d3c0r1x.github.io/paint-by-numbers/)** ·
+**[📐 Спецификация](docs/SPEC.md)** ·
+**[📱 iOS-клиент](docs/IOS.md)**
 
-Приложение, которое превращает ваше фото в раскраску по номерам — и вы рисуете её кистью, как настоящую картину.
+> **EN:** Photo → paint-by-numbers coloring page, fully in the browser.
+> React + TypeScript, guided filter → SLIC superpixels → auto-k k-means in a
+> Web Worker, Canvas paint layer, IndexedDB projects, EN/RU UI — plus a native
+> SwiftUI/PencilKit pilot for iPad sharing the same algorithm.
 
-## Что внутри
+## Проблема
 
-- **Веб-версия** — React + TypeScript + Vite + Tailwind v4. Работает в Safari на iPad (точка использования).
-- **iOS-версия** — SwiftUI + PencilKit + Swift Package (PaintEngine) — нативная версия того же движка.
-- **Движок v3** — guided filter → SLIC суперпиксели → k-means с авто-k → векторные контуры (Douglas–Peucker → Chaikin) → номера.
+Раскраски по номерам продаются готовыми наборами: картинку выбирает
+издатель, а не ты. Приложения, которые делают раскраску из своего фото,
+обычно либо гоняют изображение на сервере (приватность, задержка, лимиты),
+либо дают грубый результат: слипшиеся цвета, потерянные детали, мусорные
+контуры и сотни «пиксельных» пятен вместо областей.
 
-## Быстрый старт (веб)
+## Что я сделал
 
-```bash
-npm install
-npm run dev
+Загружаешь фото — на выходе раскраска, которую можно рисовать кистью прямо
+в браузере (в том числе с iPad в Safari), без отправки изображения куда-либо.
+
+- **Конвертация целиком на клиенте** — весь конвейер работает в Web Worker,
+  UI не залипает на время обработки (2–6 с на фото 1600 px).
+- **Своя палитра под каждое фото** — авто-k по «локтю» с порогом по ΔE00 и
+  выравниванием палитры по medoid-цветам, а не по среднему (среднее даёт
+  грязные цвета на градиентах).
+- **Детали не съедаются слиянием** — контраст-осознанное объединение соседних
+  областей: если ΔE00 между ними ≥ 12, граница остаётся.
+- **Векторные контуры** — не пиксельные ступеньки, а сглаженные пути
+  (Дуглас–Пекер → Чайкин), номера ставятся по площади области и при
+  необходимости разносятся.
+- **Рисование со слоями** — фон → контуры и номера → подсветка области →
+  слой краски (кисть/ластик, зум и пан, заливка области).
+- **Проекты живут на устройстве** — IndexedDB (Dexie), автоматическое
+  сохранение прогресса, экспорт PNG/JPEG и системный «Поделиться».
+- **Готовые шаблоны** — «Мгновенные» картинки из встроенного каталога, чтобы
+  попробовать без своей фотографии.
+
+## Архитектура
+
+```
+фото
+ └─► engine/ (Web Worker)                     canvas/ (main thread)
+      smooth.ts      guided filter ─┐
+      slic.ts        SLIC-суперпиксели │
+      quantize.ts    k-means, medoid  ├─► pipeline.ts ─► labels.ts ─► symbols.ts
+      segment.ts     слияние ΔE00     │        │
+      autoPalette.ts авто-k           │        ├─► vectorize.ts / contour.ts
+      colorSpace.ts  OKLab / CIEDE2000┘        └─► fillRender.ts ─► палитра
+                                                                  │
+      storage/projects.ts (Dexie) ◄── store/ (zustand) ◄───────────┘
+      screens/ HomeScreen · ProcessingScreen · ColoringScreen
+      export/imageExport.ts ─► PNG/JPEG + navigator.share
 ```
 
-Откройте `http://localhost:5173` в браузере. На iPad — через мобильную сеть (пункт "На этом iPad" в Safari).
+## Ключевые инженерные решения
 
-## Структура проекта
+1. **Тяжёлые вычисления — в Web Worker.** Конвейер не блокирует UI: прогресс
+   приходит по шагам, экран обработки можно закрыть, результат доживает в
+   IndexedDB.
+2. **Своё цветовое пространство (OKLab + CIEDE2000).** Разница цветов
+   считается по восприятию, а не по евклидову RGB — поэтому градиент не
+   превращается в три-четыре «полосы».
+3. **Medoid вместо среднего.** Центр кластера — реально существующий цвет
+   изображения: палитра остаётся чистой, а не мутной от усреднения выбросов.
+4. **Контраст-осознанное слияние.** Классический k-means даёт сотни мелких
+   областей; слияние уменьшает их число, но защищает детали порогом ΔE00 ≥ 12
+   — маленькая, но значимая область выживает.
+5. **Номера — часть рендера, а не текстовый слой.** Размер шрифта зависит от
+   площади области, номера расставляются жадно и разносятся при пересечении,
+   поэтому читаемы и на мелких пятнах, и на крупных заливках.
+6. **Тот же конвейер на Swift.** `ios/PaintEngine` — порт ядра на SwiftUI/
+   PencilKit с XCTest, включая CIEDE2000 по эталонным парам Sharma: алгоритм
+   проверен на двух независимых реализациях.
 
-```
-src/
-├── engine/     # Конвертация: colorSpace, quantize, segment, slic, smooth,
-│               # vectorize, labels, pipeline, worker, fillRender, autoPalette
-├── canvas/     # BrushEngine (кисть/ластик), ViewTransform ( zoom/pan),
-│               # useCanvasLayers (слои: фон → контуры → подсветка → краска)
-├── screens/    # HomeScreen, ProcessingScreen, ColoringScreen
-├── ui/         # PaletteBar, ColorCircle, Button, icons
-├── storage/    # Dexie (IndexedDB) — сохранение проектов
-├── catalog.ts  # Мгновенные шаблоны (SVG → мокаяп)
-├── export/     # export PNG/JPEG + нативный share
-└── locales/    # ru.json, en.json
-tests/          # vitest — 88 тестов (алгоритмы + storage)
-```
+## Стек
+
+React 19 · TypeScript 5.9 · Vite 7 · Tailwind v4 · Zustand · Dexie (IndexedDB) ·
+Web Worker · Canvas 2D · Vitest · ESLint/Prettier · Husky ·
+GitHub Actions (Pages + iOS) · SwiftUI + PencilKit (iPad-клиент)
 
 ## Тесты
 
 ```bash
-npm test
+npm test     # 88 тестов, vitest
 ```
 
-88 тестов: colorSpace, quantize, segment, SLIC, pipeline, CIEDE2000, autoPalette, fillRender, symbols, storage.
+Покрытие — самое дорогое в отладке: цвет (OKLab, CIEDE2000 по эталонным
+парам), квантизация и medoid-палитра, SLIC, слияние с контраст-порогом,
+векторизация и контуры, расстановка номеров, fill-рендер, авто-k, IndexedDB-
+хранилище и компоненты UI. CI (`test.yml`) гоняет тесты и сборку на каждый
+пуш, `ios.yml` — `swift test` и сборку unsigned IPA на macOS-раннере.
 
-## iOS (опционально)
+## Ограничения
 
-См. [README-IOS.md](./README-IOS.md) — билд через GitHub Actions, установка через AltStore/Sideloadly.
+- Обработка — в один поток внутри воркера: фото больше ~3000 px по стороне
+  заметно замедляет конвертацию (нужен tiling или WASM).
+- Палитры — до 24 цветов; больше делает раскраску нераскрашиваемой руками.
+- iOS-часть — рабочий пилот (сборка через CI + сайдлоад), в App Store не
+  публиковался; основной продукт — веб-версия.
+- Палитра не подстраивается под тип художественных красок: это RGB-цвета, а
+  не смешивание физических пигментов.
 
-## Развитие (для разработчиков)
+## Локальный запуск
 
-См. [SPEC.md](./SPEC.md) — полная спецификация проекта с заданиями для Cursor.
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # production-сборка
+npm run lint     # eslint
+```
+
+Открывать лучше в Safari/iPad или Chrome — приложение рассчитано в том числе
+на планшет (кисть, зум пальцами).
+
+## Развитие (AI-assisted development)
+
+Значительная часть кода написана с AI-ассистентом, и это осознанный выбор
+скорости, а не скрытая деталь:
+
+- **AI использовался как ускоритель** — генерация кода по описанию,
+  черновики алгоритмов, рутина вёрстки и тестов;
+- **на мне** — декомпозиция задачи, выбор архитектуры (воркер, слои канваса,
+  IndexedDB), формулировка алгоритма обработки изображения, отладка
+  расхождений между ожидаемым и реальным результатом, проверка сгенерированного
+  кода, написание тестовых сценариев и доведение поведения продукта до
+  нужного.
+
+AI не заменяет проверку: тесты, ревью диффов и запуск на реальном устройстве
+обязательны — все 88 тестов и живая демо-версия проходят именно через это.
+
+## Документация
+
+- [docs/SPEC.md](docs/SPEC.md) — полная спецификация: конвейер v3, параметры
+  каждого шага, критерии приёмки.
+- [docs/IOS.md](docs/IOS.md) — нативный клиент: PaintEngine, сборка через
+  Actions, установка на iPad с Windows (AltStore/Sideloadly).
 
 ## Лицензия
 
-MIT — используйте свободно для обучения и личного творчества.
+MIT — см. [LICENSE](LICENSE).
